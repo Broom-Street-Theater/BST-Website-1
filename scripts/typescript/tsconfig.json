@@ -1,0 +1,57 @@
+{
+	"compilerOptions" : {
+		"sourceMap" : true,
+		"outDir": "../compiled_js/",
+		"outFile": "../compiled_js/bst.js",
+		"target" : "es5",
+		"module" : "amd",
+		"declaration": true,
+		"watch": true
+	},
+	"files": [
+		"./controllers/navigate.ts",
+		"./controllers/browserHistory.ts",
+		"./controllers/core.ts",
+		"./admin/dateSelector.ts",
+		"./models/interfaces.ts",
+		"./models/show.ts",
+		"./models/home.ts",
+		"./controllers/scroll.ts",
+		"./controllers/server.ts",
+		"./controllers/show.ts",
+		"./controllers/seasons.ts",
+		"./admin/adminServer.ts",
+
+		"./views/shared/sharedView.ts",
+		"./views/shared/sectionView.ts",
+		"./views/shared/subsectionView.ts",
+		"./views/shared/subsectionsView.ts",
+		"./views/shared/headerView.ts",
+
+		"./admin/adminHome.ts",
+		"./admin/adminShow.ts",
+		"./admin/adminController.ts",
+		//"./admin/adminBPT.ts",
+		"./admin/adminDelete.ts",
+
+		"./views/home/aboutSection.ts",
+		"./views/home/getInvolvedSection.ts",
+		"./views/home/newsSection.ts",
+		"./views/home/homeView.ts",
+		"./views/home/currentShowView.ts",
+		"./views/home/seasonsView.ts",
+		"./views/home/resourcesSection.ts",
+		"./views/home/seasonsSection.ts",
+		"./views/home/donateSection.ts",
+
+		"./views/show/ticketSection.ts",
+		"./views/show/buzzSection.ts",
+		"./views/show/bioSection.ts",
+		"./views/show/synopsisSection.ts",
+		"./views/show/photoLoopView.ts",
+		"./views/show/scrollablePhotos.ts",
+		"./views/show/auditionSection.ts",
+		"./views/show/simpleTixSection.ts",
+		"./views/show/showView.ts"
+	]
+}

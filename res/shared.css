@@ -1,0 +1,29 @@
+body {
+	margin: 0;
+	padding: 0;
+	font-family: "OpenSans";
+	background: #222;
+	padding-bottom: 150px;
+}
+
+a {
+	color: #FFF;
+	text-decoration: none;
+}
+
+
+/* link to jump to a section of the show */
+a,
+.navBar .btn {
+	margin-left: 10px;
+	margin-right: 10px;
+	cursor: pointer;
+	text-decoration: none;
+	color: #FFF;
+}
+
+a:hover,
+.navBar .btn:hover {
+	text-decoration: underline;
+}
+

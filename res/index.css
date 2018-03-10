@@ -1,0 +1,83 @@
+
+ /*--------------------------
+ * TICKET STYLES
+ *--------------------------*/
+ .tickets .content img {
+ 	width: 100%;
+ 	height: auto;
+ }
+
+ /*-----------------------
+   CONTACT US
+ ------------------------*/
+
+ .contactInfoSec .contacts {
+ 	display: flex;
+ 	justify-content: space-between;
+ 	flex-wrap: wrap;
+ 	margin-top: 10px;
+ }
+
+ .contactInfoSec .contacts .contact {
+ 	width: 33%;
+ 	margin-bottom: 15px;
+ }
+
+.contactInfoSec .contacts .contactInfo a{
+	color: #000;
+	cursor: pointer;
+}
+
+.contactInfoSec .contacts .contactInfo a:hover {
+	text-decoration: underline;
+}
+
+.contactInfoSec .contacts .contact .subheader {
+	font-family: "OpenSansBold";
+}
+
+
+/* ---- */
+#homeElements {
+	z-index: 0;
+	position: absolute;
+	width: 100%;
+	transition: 1s ease-in-out left;
+}
+
+#homeElements.offscreen {
+	left: 100%;
+	display: none;
+}
+
+#homeElements.offscreen > div {
+	position: absolute;
+}
+
+#homeElements.offscreen .seasons,
+#homeElements.offscreen .mainMenuWrapper
+{
+	position: absolute;
+}
+
+#mainShow {
+	position: absolute;
+    left: 0;
+    width: 100%;
+	top: 0;
+	height: 100%;
+	z-index: 2;
+	opacity: 1;
+	transition: 1s ease-in-out all;
+	background: #222;
+}
+
+#mainShow.offscreen {
+	opacity: 0;
+	pointer-events: none;
+}
+
+#mainShow.offscreen .mainMenuWrapper,
+#mainShow.moving .mainMenuWrapper {
+	position: absolute;
+}
