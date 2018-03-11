@@ -1,4 +1,4 @@
-///<reference path="../../../../../toolkip.ts/typescript/compiled_js/kip.d.ts" />
+///<reference path="../../../../../toolkip.ts/compiled_js/kip.d.ts" />
 namespace BST {
 
     //#region HELPER FUNCTIONS

@@ -1,6 +1,6 @@
 namespace BST.Server {
 
-    export const DEBUG: boolean = false;
+    export const DEBUG: boolean = true;
 
     /**...........................................................................
      * getPath

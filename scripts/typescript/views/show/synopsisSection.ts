@@ -150,10 +150,12 @@ namespace BST {
             let details: IShowDetails = this._data.showDetails;
             let children: HTMLElement[] = [];
 
+            let showLength: string = KIP.Dates.getDisplayDuration({minutes: details.showLength});
+
             // only show show details if we have a synopsis
             if (hasSynopsis) {
                 children = [
-                    this._createSidebarElement("Show Length:", details.showLength.toString() + " mins"),
+                    this._createSidebarElement("Show Length:", showLength),
                     this._createSidebarElement("Has Intermission? ", details.hasIntermission ? "Yes" : "No"),
                     this._createSidebarElement("Family Friendly?", details.isKidFriendly ? "Yes" : "No"),
                     this._createSidebarElement("Warnings: ", details.warnings)

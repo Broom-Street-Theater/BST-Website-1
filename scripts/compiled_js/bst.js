@@ -208,7 +208,7 @@ var BST;
         _handleState();
     });
 })(BST || (BST = {}));
-///<reference path="../../../../../toolkip.ts/typescript/compiled_js/kip.d.ts" />
+///<reference path="../../../../../toolkip.ts/compiled_js/kip.d.ts" />
 var BST;
 (function (BST) {
     //#region HELPER FUNCTIONS
@@ -733,7 +733,7 @@ var BST;
 (function (BST) {
     var Server;
     (function (Server) {
-        Server.DEBUG = false;
+        Server.DEBUG = true;
         /**...........................................................................
          * getPath
          * ...........................................................................
@@ -6187,10 +6187,11 @@ var BST;
         SynopsisSection.prototype._createOtherStats = function (hasSynopsis) {
             var details = this._data.showDetails;
             var children = [];
+            var showLength = KIP.Dates.getDisplayDuration({ minutes: details.showLength });
             // only show show details if we have a synopsis
             if (hasSynopsis) {
                 children = [
-                    this._createSidebarElement("Show Length:", details.showLength.toString() + " mins"),
+                    this._createSidebarElement("Show Length:", showLength),
                     this._createSidebarElement("Has Intermission? ", details.hasIntermission ? "Yes" : "No"),
                     this._createSidebarElement("Family Friendly?", details.isKidFriendly ? "Yes" : "No"),
                     this._createSidebarElement("Warnings: ", details.warnings)

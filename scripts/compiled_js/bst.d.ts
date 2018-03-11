@@ -1,4 +1,4 @@
-/// <reference path="../../../../toolkip.ts/typescript/compiled_js/kip.d.ts" />
+/// <reference path="../../../../toolkip.ts/compiled_js/kip.d.ts" />
 declare namespace BST {
     enum NavigationType {
         HOME = 0,
