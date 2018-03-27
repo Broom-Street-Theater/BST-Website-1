@@ -176,6 +176,19 @@ namespace BST {
 				fontSize: "1.2em"
 			},
 
+			".writerDirectorWrapper": {
+				display: "flex",
+				alignItems: "center",
+
+				nested: {
+					".lbl": {
+						fontSize: "0.8em",
+						color: "rgba(0,0,0,.8)",
+						paddingRight: "5px"
+					}
+				}
+			}
+
 		}
 
 		/** set the appropriate ID for this show */
@@ -406,13 +419,35 @@ namespace BST {
 		private _createWriterAndDirectorDetails(showTitle: IShowTitleDetails): HTMLElement {
 			let writerDirectorBox: HTMLElement = KIP.createSimpleElement("", "writerDirector");
 			if (showTitle.writer !== showTitle.director) {
-				let writer: HTMLElement = KIP.createSimpleElement("", "writer", "Written by: " + showTitle.writer, null, null, writerDirectorBox);
-				let director: HTMLElement = KIP.createSimpleElement("", "director", "Directed by: " + showTitle.director, null, null, writerDirectorBox);
+				this._createWriterOrDirectorDetailElem("Written by", showTitle.writer, writerDirectorBox);
+				this._createWriterOrDirectorDetailElem("Directed by", showTitle.director, writerDirectorBox);
 			} else {
-				writerDirectorBox.innerHTML = "Written and Directed by: " + showTitle.writer;
+				this._createWriterOrDirectorDetailElem("Written and Directed by", showTitle.writer, writerDirectorBox);
 			}
 
 			return writerDirectorBox;
+		}
+
+		/**...........................................................................
+		 * _createWriterOrDirectorDetailElem
+		 * ...........................................................................
+		 * @param lbl 
+		 * @param data 
+		 * @param parent 
+		 * ...........................................................................
+		 */
+		private _createWriterOrDirectorDetailElem(lbl: string, data: string, parent: HTMLElement): HTMLElement {
+			let wrapper = KIP.createElement({ cls: "writerDirectorWrapper", parent: parent });
+
+			if (!data) { 
+				return wrapper;
+			}
+
+			let lblElem = KIP.createElement({ cls: "lbl", content: lbl + ": " , parent: wrapper});
+			let dataElem = KIP.createElement({ cls: "data", content: data, parent: wrapper });
+
+			return wrapper;
+
 		}
 
 		/**...........................................................................

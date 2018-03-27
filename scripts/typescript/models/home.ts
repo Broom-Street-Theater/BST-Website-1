@@ -76,4 +76,35 @@ namespace BST {
         blurb: string;
         paypalAccount: string;
     }
+
+    /** 
+     * @class   HomeData
+     * 
+     * @version 1.0
+     * @author  Kip Price
+     */
+    export class HomeData {
+        
+        /**
+         * shouldShowSectionLink
+         * 
+         * Determines if a particular link should show for a section, based 
+         * on whether that section actually exists in code.
+         * @param   key     The key of the section
+         * @returns True if the key matches a section, false otherwise
+         */
+        public static shouldShowSectionLink (key: string): boolean {
+            switch (key) {
+                case "news":
+                case "getInvolved":
+                case "about":
+                case "resources":
+                case "donate":
+                case "seasonsSection":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+    }
 }

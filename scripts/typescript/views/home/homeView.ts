@@ -17,6 +17,8 @@ namespace BST {
         /** data for the home screen */
         protected _data: IHomeData;
 
+        protected _seasons: ISeasons;
+
         protected _header: BSTHeader;
 
         /** initialize the view */
@@ -37,29 +39,18 @@ namespace BST {
             if (!this._data) { return; }
 
             // TOP SECTION: CURRENT SHOW AND OLD SHOWS
-            let seasonsView: SeasonsSidelineView = new SeasonsSidelineView(this._header);
+            let sidebar: SeasonsSidelineView = new SeasonsSidelineView(this._header);
 
             // SECTIONS
-            let newsSection: NewsSection = this._createNewsSection();
-            let involvedSection: GetInvolvedSection = this._createGetInvolvedSection();
-            let aboutSection: AboutSection = this._createAboutSection();
-            let resourcesSection: ResourcesSection = this._createResourcesSection();
-            let donateSection: DonateSection = this._createDonateSection();
+            let sections: HTMLElement[] = this._determineSections();
+            sections.splice(0, 0, sidebar.base);
 
             // CREATE THE PAGE
             let page: HTMLElement = KIP.createElement(
                 {
                     id: "home",
                     cls: "home",
-                    children: [
-                        //menu.base,
-                        seasonsView.base,
-                        newsSection.base,
-                        involvedSection.base,
-                        aboutSection.base,
-                        resourcesSection.base,
-                        donateSection.base
-                    ]
+                    children: sections
                 }
             );
 
@@ -67,6 +58,50 @@ namespace BST {
 
             // update the bg image of the page
             document.body.style.backgroundImage = "url(" + this._data.bgURL + ")";
+        }
+
+        /** 
+         * _determineSections
+         * 
+         * Figure out which sections should be displayed
+         * @returns The array of sections to display
+         * 
+         */
+        protected _determineSections(): HTMLElement[] {
+            let sections: HTMLElement[] = [];
+            for (let menuItem of this._data.menuItems){
+                let section: SectionView = this._determineSection(menuItem.link);
+                if (!section) { continue; }
+                sections.push(section.base);
+            }
+
+            return sections;
+        } 
+
+        /**
+         * _determineSection
+         * 
+         * Figure out which section should be created
+         * @param   key     The key for this section
+         * @returns The created section
+         */
+        protected _determineSection(key: string): SectionView {
+            switch (key) {
+                case "news":
+                    return this._createNewsSection();
+                case "getInvolved":
+                    return this._createGetInvolvedSection();
+                case "about":
+                    return this._createAboutSection();
+                case "resources":
+                    return this._createResourcesSection();
+                case "donate":
+                    return this._createDonateSection();
+                case "seasonsSection":
+                    return this._createSeasonsSection();
+                default:
+                    return null;
+            }
         }
 
         /**...........................................................................
@@ -130,6 +165,17 @@ namespace BST {
         private _createDonateSection(): DonateSection {
             let section: DonateSection = new DonateSection("donate", "DONATE", "donate");
             section.data = this._data.donateInfo;
+            return section;
+        }
+
+        /**...........................................................................
+         * _createSeasonsSection
+         * ...........................................................................
+         * 
+         * ...........................................................................
+         */
+        private _createSeasonsSection(): SeasonsSection {
+            let section: SeasonsSection = new SeasonsSection("seasonsSection", "SEASONS", "seasonsSection");
             return section;
         }
     }

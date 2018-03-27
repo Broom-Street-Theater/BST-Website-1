@@ -108,9 +108,9 @@ namespace BST.Server {
     function convertDatesToStrings<T extends Object, K extends keyof T>(data: T): T {
         KIP.map(data, (elem: any, key: K) => {
             if (elem instanceof Date) {
-                data[key] = KIP.Dates.shortDateTime(elem);
+                data[key] = KIP.Dates.shortDateTime(elem) as any;
             } else if (typeof elem === "object") {
-                data[key] = convertDatesToStrings(data[key]);
+                data[key] = convertDatesToStrings(data[key] as any);
             }
         });
 

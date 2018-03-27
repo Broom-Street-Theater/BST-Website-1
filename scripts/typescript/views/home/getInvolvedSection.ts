@@ -314,6 +314,11 @@ namespace BST {
 
             ".getInvolved.mobile .involvementSubsection .involvementWrapper": {
                 height: "10vw"
+            },
+
+            ".getInvolved .noData": {
+                color: "rgba(0,0,0,.5)",
+                fontSize: "0.9em"
             }
 
         }
@@ -341,6 +346,13 @@ namespace BST {
             for (idx; idx < this._data.length; idx += 1) {
                 let involvedItem: HTMLElement = this._createGetInvolvedItem(this._data[idx]);
                 this._elems.content.appendChild(involvedItem);
+            }
+
+            if (this._data.length === 0) {
+                this._elems.content.appendChild(KIP.createElement({
+                    cls: "noData",
+                    content: "Nothing right now; check back later."
+                }))
             }
         }
 

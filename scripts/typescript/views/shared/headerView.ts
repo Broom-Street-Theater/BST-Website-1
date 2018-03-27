@@ -32,6 +32,7 @@ namespace BST {
     }
 
     const ANIMATION_TIME: number = 800;
+
     /**...........................................................................
      * @class BSTHeader
      * ...........................................................................
@@ -55,6 +56,7 @@ namespace BST {
         /** elements that make up the header */
         protected _elems: IHeaderElems;
 
+        /** handle listening to resize events */
         protected _resizeListeners: Function[];
 
         /** styles specific for this header */
@@ -432,6 +434,7 @@ namespace BST {
             // add each of the configured menu items
             let item: IMenuItem;
             for (item of this._homeData.menuItems) {
+                if (item.type === MenuTypeEnum.SECTION && !HomeData.shouldShowSectionLink(item.link)) { continue; }
                 let menuItemElem: HTMLElement = this._createHomeMenuItem(item);
 
                     // make sure we can get to the appropriate spot
@@ -443,6 +446,14 @@ namespace BST {
             }
         }
 
+        /**...........................................................................
+         * _addMenuLink
+         * ...........................................................................
+         * 
+         * @param elem 
+         * @param link 
+         * ...........................................................................
+         */
         protected _addMenuLink(elem: HTMLElement, link: string): void {
             elem.addEventListener("click", () => {
                 scrollTo(link, this._elems.base.offsetHeight);
@@ -594,14 +605,16 @@ namespace BST {
          * ...........................................................................
          */
         protected _createShowStatistic(lbl: string, data: string): HTMLElement {
-            let comboLbl: HTMLElement = KIP.createSimpleElement("", "lbl", lbl + ":");
-            let comboData: HTMLElement = KIP.createSimpleElement("", "datum", data);
             let comboElem: HTMLElement = KIP.createElement({
                 id: this._showData.showTitle.id + "|combo", 
                 cls: "combo",
-                children: [comboLbl, comboData],
                 parent: this._elems.showStats
             });
+
+            if (!data) { return comboElem; }
+            
+            let comboLbl: HTMLElement = KIP.createElement({cls: "lbl", content: lbl + ":", parent: comboElem});
+            let comboData: HTMLElement = KIP.createElement({cls: "datum", content: data, parent: comboElem });
 
             return comboElem;
         }

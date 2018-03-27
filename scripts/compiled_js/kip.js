@@ -1569,6 +1569,33 @@ var KIP;
 })(KIP || (KIP = {}));
 var KIP;
 (function (KIP) {
+    var Navigator = /** @class */ (function () {
+        function Navigator() {
+            /** keep track of the views */
+            this._views = new KIP.Collection();
+        }
+        Navigator.prototype.navigateTo = function (navigationPath, constructor) {
+            var addlArgs = [];
+            for (var _i = 2; _i < arguments.length; _i++) {
+                addlArgs[_i - 2] = arguments[_i];
+            }
+            var view = this._views.getValue(navigationPath);
+            if (!view) {
+                view = new constructor(addlArgs);
+            }
+            else {
+                if (KIP.isUpdatable(view)) {
+                    view.update.apply(addlArgs);
+                }
+            }
+            view.draw(this._parent);
+        };
+        return Navigator;
+    }());
+    KIP.Navigator = Navigator;
+})(KIP || (KIP = {}));
+var KIP;
+(function (KIP) {
     //#region INTERFACES AND CONSTANTS
     //#endregion
     //#region HELPER FUNCTIONS
@@ -3656,6 +3683,7 @@ var KIP;
 var KIP;
 (function (KIP) {
     //#region INTERFACES
+    ;
     var DEBUG = true;
     //#endregion
     // Public namespace wrapper for this functionality
@@ -4304,6 +4332,7 @@ var KIP;
         //#endregion
     })(Trig = KIP.Trig || (KIP.Trig = {}));
 })(KIP || (KIP = {}));
+///<reference path="trig.ts" />
 var KIP;
 (function (KIP) {
     /** check if the element is an HTML element */
@@ -4474,6 +4503,16 @@ var KIP;
         return (test_name.indexOf(name) !== -1);
     }
     KIP.isNamedClass = isNamedClass;
+    /**
+     * isUpdatable
+     *
+     * Determine if this object has an update method
+     * @param test
+     */
+    function isUpdatable(test) {
+        return !!(test.update);
+    }
+    KIP.isUpdatable = isUpdatable;
 })(KIP || (KIP = {}));
 var KIP;
 (function (KIP) {
@@ -4696,6 +4735,12 @@ var KIP;
             }
             return _this;
         }
+        Object.defineProperty(Collection.prototype, "keys", {
+            /** allow retrieval of a set of keys */
+            get: function () { return Object.keys(this._data); },
+            enumerable: true,
+            configurable: true
+        });
         Object.defineProperty(Collection.prototype, "addType", {
             set: function (addType) { this._addType = addType; },
             enumerable: true,
@@ -6988,6 +7033,7 @@ var KIP;
 ///<reference path="drawable.ts" />
 var KIP;
 (function (KIP) {
+    //TODO: Cleanup this implementation
     var DraggableFunctions;
     (function (DraggableFunctions) {
         DraggableFunctions[DraggableFunctions["DragEnter"] = 0] = "DragEnter";
@@ -7004,6 +7050,7 @@ var KIP;
      */
     var Draggable = /** @class */ (function (_super) {
         __extends(Draggable, _super);
+        //#endregion
         /**...........................................................................
          * Creates a Draggable element
          *
@@ -7064,6 +7111,12 @@ var KIP;
             enumerable: true,
             configurable: true
         });
+        /**...........................................................................
+         * _addDefaultEventFunctions
+         * ...........................................................................
+         * Add handlers for each of these elements
+         * ...........................................................................
+         */
         Draggable.prototype._addDefaultEventFunctions = function () {
             var base = this._elems.base;
             // MOVE FUNCTION
@@ -7098,6 +7151,12 @@ var KIP;
                 target.appendChild(base);
             };
         };
+        /**...........................................................................
+         * _addStandardDragEventListeners
+         * ...........................................................................
+         * Add
+         * ...........................................................................
+         */
         Draggable.prototype._addStandardDragEventListeners = function () {
             var _this = this;
             var base = this._elems.base;
@@ -7120,6 +7179,12 @@ var KIP;
                 this._addStandardTargetEventListeners(target);
             }
         };
+        /**...........................................................................
+         * _addNonStandardDragEventListeners
+         * ...........................................................................
+         *
+         * ...........................................................................
+         */
         Draggable.prototype._addNonStandardDragEventListeners = function () {
             var _this = this;
             var base = this._elems.base;
@@ -7169,6 +7234,12 @@ var KIP;
                 this._addNonStandardTargetEventListeners(target);
             }
         };
+        /**...........................................................................
+         * _addNonStandardTargetEventListeners
+         * ...........................................................................
+         * @param target
+         * ...........................................................................
+         */
         Draggable.prototype._addNonStandardTargetEventListeners = function (target) {
             var _this = this;
             target.addEventListener("mouseup", function (e) {
@@ -7190,6 +7261,12 @@ var KIP;
                 _this._onDragLeaveTarget(target, e);
             });
         };
+        /**...........................................................................
+         * _addStandardTargetEventListeners
+         * ...........................................................................
+         * @param target
+         * ...........................................................................
+         */
         Draggable.prototype._addStandardTargetEventListeners = function (target) {
             var _this = this;
             target.addEventListener("dragover", function (e) {
@@ -7202,9 +7279,12 @@ var KIP;
                 _this._onDropOnTarget(target, e);
             });
         };
-        /**
+        /**...........................................................................
+         * addDragTarget
+         * ...........................................................................
          * Adds a new element that can receive the draggable element
-         * @param {HTMLElement} target The new target to allow drop events on
+         * @param 	target 	The new target to allow drop events on
+         * ...........................................................................
          */
         Draggable.prototype.addDragTarget = function (target) {
             this._targets.push(target);
@@ -7215,32 +7295,78 @@ var KIP;
                 this._addNonStandardTargetEventListeners(target);
             }
         };
+        /**...........................................................................
+         * _onDragEnterTarget
+         * ...........................................................................
+         * @param target
+         * @param e
+         * ...........................................................................
+         */
         Draggable.prototype._onDragEnterTarget = function (target, e) {
             this._dragEnterFunc(target, e);
         };
+        /**...........................................................................
+         * _onDragLeaveTarget
+         * ...........................................................................
+         * @param target
+         * @param e
+         * ...........................................................................
+         */
         Draggable.prototype._onDragLeaveTarget = function (target, e) {
             this._dragLeaveFunc(target, e);
         };
+        /**...........................................................................
+         * _onMove
+         * ...........................................................................
+         * @param delta
+         * ...........................................................................
+         */
         Draggable.prototype._onMove = function (delta) {
             this._moveFunc(delta);
         };
+        /**...........................................................................
+         * _onDropOnTarget
+         * ...........................................................................
+         * @param target
+         * @param e
+         * ...........................................................................
+         */
         Draggable.prototype._onDropOnTarget = function (target, e) {
             this._dropFunc(target, e);
         };
-        Draggable.prototype.overrideFunctions = function (dragEnter, dragLeave, drop, move, noReplace) {
-            if (dragEnter) {
-                this._overrideFunction(DraggableFunctions.DragEnter, this._dragEnterFunc, dragEnter, noReplace);
+        /**...........................................................................
+         * _overrideFunctions
+         * ...........................................................................
+         * @param dragEnter
+         * @param dragLeave
+         * @param drop
+         * @param move
+         * @param noReplace
+         * ...........................................................................
+         */
+        Draggable.prototype.overrideFunctions = function (handlers, noReplace) {
+            if (handlers.onDragEnter) {
+                this._overrideFunction(DraggableFunctions.DragEnter, this._dragEnterFunc, handlers.onDragEnter, noReplace);
             }
-            if (dragLeave) {
-                this._overrideFunction(DraggableFunctions.DragLeave, this._dragLeaveFunc, dragLeave, noReplace);
+            if (handlers.onDragLeave) {
+                this._overrideFunction(DraggableFunctions.DragLeave, this._dragLeaveFunc, handlers.onDragLeave, noReplace);
             }
-            if (drop) {
-                this._overrideFunction(DraggableFunctions.Drop, this._dropFunc, drop, noReplace);
+            if (handlers.onDrop) {
+                this._overrideFunction(DraggableFunctions.Drop, this._dropFunc, handlers.onDrop, noReplace);
             }
-            if (move) {
-                this._overrideFunction(DraggableFunctions.Move, this._moveFunc, move, noReplace);
+            if (handlers.onMove) {
+                this._overrideFunction(DraggableFunctions.Move, this._moveFunc, handlers.onMove, noReplace);
             }
         };
+        /**...........................................................................
+         * _overrideFunction
+         * ...........................................................................
+         * @param func
+         * @param def
+         * @param override
+         * @param no_replace
+         * ...........................................................................
+         */
         Draggable.prototype._overrideFunction = function (func, def, override, no_replace) {
             var _this = this;
             var wrapper;
@@ -7287,10 +7413,13 @@ var KIP;
                     break;
             }
         };
-        /**
+        /**...........................................................................
+         * _getDelta
+         * ...........................................................................
          * Gets the delta from the last measurement and this point
-         * @param   {MouseEvent} e The event we are measuring from
-         * @returns {IPoint}       The delta represented as a point
+         * @param	e 	The event we are measuring from
+         * @returns The delta represented as a point
+         * ...........................................................................
          */
         Draggable.prototype._getDelta = function (e) {
             var delta;
@@ -7371,19 +7500,14 @@ var KIP;
      * @param 	elem         	The element to make draggable
      * @param 	target       	The drop-target of the draggable
      * @param 	non_standard 	True if we should use non-standard events
-     * @param	dragEnterFunc	What to do when entering a drag target
-     * @param	dragLeaveFunc	What to do when leaving a drag target
-     * @param	dropFunc		What to do when an element is dropped
-     * @param	moveFunc		What to do when an element is moved
      *
      * @returns	HTML element that respects drag events
      * ...........................................................................
      */
-    function makeDraggable(elem, target, non_standard, dragEnterFunc, dragLeaveFunc, dropFunc, moveFunc) {
+    function makeDraggable(elem, options) {
         // Behind the scenes, we create a draggable to get this
-        var drg;
-        drg = new ExistingDraggable(elem, target, non_standard);
-        drg.overrideFunctions(dragEnterFunc, dragLeaveFunc, dropFunc, moveFunc);
+        var drg = new ExistingDraggable(elem, options.target, options.isNonStandard);
+        drg.overrideFunctions(options);
         // Return the element of the Draggable
         return drg.base;
     }
@@ -10272,6 +10396,7 @@ var KIP;
                 _this._standardCls = "kipFormElem";
                 _this._addClassName("FormElement");
                 _this._id = id;
+                _this._hasErrors = false;
                 // If this is another element, parse it
                 if (isFormElement(data)) {
                     _this._cloneFromFormElement(data);
@@ -10355,7 +10480,10 @@ var KIP;
                 // create the appropriate layout
                 this._layout = template.layout || Forms.FormElementLayoutEnum.MULTILINE;
                 // determine whether we need this element to submit
-                this._required = template.required;
+                this._isRequired = template.required;
+                if (this._isRequired) {
+                    KIP.Events.dispatchEvent(Forms.FORM_SAVABLE_CHANGE, { hasErrors: false, hasMissingRequired: true });
+                }
                 // ensure a particular order of elements
                 this._position = template.position;
                 // set an appropriate CSS class
@@ -10408,6 +10536,9 @@ var KIP;
                 this._onCreateElements();
                 // register the change listener if we created one
                 if (this._elems.input) {
+                    this._elems.input.addEventListener("input", function () {
+                        _this._changeEventFired();
+                    });
                     this._elems.input.addEventListener("change", function () {
                         _this._changeEventFired();
                     });
@@ -10510,7 +10641,7 @@ var KIP;
                 return false;
             };
             //#endregion
-            //#region Publicly-accessible functions 
+            //#region PUBLICLY-ACCESSIBLE FUNCTIONS
             /**...........................................................................
              * save
              * ...........................................................................
@@ -10530,7 +10661,25 @@ var KIP;
              * ...........................................................................
              */
             FormElement.prototype.canSave = function () {
-                return !this._hasErrors;
+                return {
+                    hasErrors: this._hasErrors,
+                    hasMissingRequired: this._hasBlankRequiredElems()
+                };
+            };
+            /**...........................................................................
+             * _hasBlankRequiredElems
+             * ...........................................................................
+             * Check if this element has any misisng required elements
+             * ...........................................................................
+             */
+            FormElement.prototype._hasBlankRequiredElems = function () {
+                if (!this._isRequired) {
+                    return false;
+                }
+                if (this._data !== this._defaultValue) {
+                    return false;
+                }
+                return true;
             };
             /** ...........................................................................
              * update
@@ -10589,6 +10738,7 @@ var KIP;
                     // let the listeners know that this succeeded
                     this._dispatchChangeEvent();
                 }
+                this._dispatchSavableChangeEvent();
             };
             /**...........................................................................
              * _clearErrors
@@ -10607,13 +10757,15 @@ var KIP;
              *  handle the shared validation function
              * ...........................................................................
              */
-            FormElement.prototype._validate = function (data) {
+            FormElement.prototype._validate = function (data, errorString) {
                 // run it through the eval function
                 if (this._onValidate) {
-                    if (!this._onValidate(data)) {
+                    if (!this._onValidate(data, errorString)) {
+                        this._hasErrors = true;
                         return false;
                     }
                 }
+                this._hasErrors = false;
                 return true;
             };
             /**...........................................................................
@@ -10622,9 +10774,12 @@ var KIP;
              * display a default error message
              * ...........................................................................
              */
-            FormElement.prototype._onValidateError = function (msg) {
-                if (!msg) {
-                    msg = "uh-oh: " + this._id + "'s data couldn't be saved";
+            FormElement.prototype._onValidateError = function (err) {
+                var _this = this;
+                var msg;
+                if (err) {
+                    msg = err.title ? err.title + ": " : "Uh-oh: ";
+                    msg += err.details || (this._id + "'s data couldn't be saved");
                 }
                 console.log(msg);
                 /** if we have an error element, fill it with the error */
@@ -10633,8 +10788,36 @@ var KIP;
                 }
                 /** update the thing */
                 if (this._elems.input) {
-                    this._elems.input.value = this._data;
+                    var value = void 0;
+                    switch (this._validationType) {
+                        case Forms.ValidationType.CLEAR_ERROR_VALUE:
+                            value = this._defaultValue;
+                            break;
+                        case Forms.ValidationType.KEEP_ERROR_VALUE:
+                            value = this._elems.input.value;
+                            break;
+                        case Forms.ValidationType.NO_BLUR_PROCESSED:
+                            value = this._elems.input.value;
+                            window.setTimeout(function () { _this._elems.input.focus(); }, 10);
+                            break;
+                        case Forms.ValidationType.RESTORE_OLD_VALUE:
+                            value = this._data;
+                            break;
+                        default:
+                            value = this._defaultValue;
+                            break;
+                    }
+                    this._elems.input.value = value;
                 }
+            };
+            /**...........................................................................
+            * _dispatchSavableChangeEvent
+            * ...........................................................................
+            * let any listeners know that we updated the savable status of this element
+            * ...........................................................................
+            */
+            FormElement.prototype._dispatchSavableChangeEvent = function () {
+                KIP.Events.dispatchEvent(Forms.FORM_SAVABLE_CHANGE, {});
             };
             /**...........................................................................
              * _dispatchChangeEvent
@@ -10673,8 +10856,12 @@ var KIP;
              * ...........................................................................
              */
             FormElement.prototype._standardValidation = function (value) {
-                if (!this._validate(value)) {
-                    this._onValidateError();
+                var errorString = {
+                    title: "",
+                    details: ""
+                };
+                if (!this._validate(value, errorString)) {
+                    this._onValidateError(errorString);
                     return false;
                 }
                 this._data = value;
@@ -10754,6 +10941,11 @@ var KIP;
                     fontSize: "1.8em",
                     position: "absolute",
                     marginLeft: "2px"
+                },
+                ".kipFormElem .error": {
+                    color: "#C30",
+                    fontSize: "0.7em",
+                    fontStyle: "italic"
                 }
             };
             return FormElement;
@@ -11068,16 +11260,21 @@ var KIP;
              * ...........................................................................
              */
             SectionElement.prototype.canSave = function () {
+                // if we only have a single child, check that one
                 if (Forms.isFormElement(this._children)) {
                     return this._children.canSave();
+                    // otherwise, check all of our children
                 }
                 else {
-                    var canSave_1 = true;
+                    var canSave_1 = {
+                        hasErrors: false,
+                        hasMissingRequired: false
+                    };
                     KIP.map(this._children, function (child) {
-                        if (!child.canSave()) {
-                            canSave_1 = false;
-                        }
-                    }, function () { return !canSave_1; });
+                        var childCanSave = child.canSave();
+                        canSave_1.hasErrors = canSave_1.hasErrors || childCanSave.hasErrors;
+                        canSave_1.hasMissingRequired = canSave_1.hasMissingRequired || childCanSave.hasMissingRequired;
+                    }, function () { return canSave_1.hasErrors && canSave_1.hasMissingRequired; });
                     return canSave_1;
                 }
             };
@@ -11341,12 +11538,15 @@ var KIP;
              * ...........................................................................
              */
             ArrayElement.prototype.canSave = function () {
-                var canSave = true;
+                var canSave = {
+                    hasErrors: false,
+                    hasMissingRequired: false
+                };
                 KIP.map(this._children, function (child) {
-                    if (!child.canSave()) {
-                        canSave = false;
-                    }
-                }, function () { return !canSave; });
+                    var childCanSave = child.canSave();
+                    canSave.hasErrors = canSave.hasErrors || childCanSave.hasErrors;
+                    canSave.hasMissingRequired = canSave.hasMissingRequired || childCanSave.hasMissingRequired;
+                }, function () { return canSave.hasErrors && canSave.hasMissingRequired; });
                 return canSave;
             };
             /** handle clearing out the array */
@@ -11541,17 +11741,11 @@ var KIP;
                         },
                     }
                 },
-                ".formChildren > div.arrayChild .prev.kipBtn": {
+                ".formChildren > div.arrayChild:first-child .prev.kipBtn": {
                     display: "none"
                 },
-                ".formChildren > div.arrayChild + div.arrayChild .prev.kipBtn": {
-                    display: "block"
-                },
-                ".formChildren > div.arrayChild + div.arrayChild .next": {
+                ".formChildren > div.arrayChild:last-child .next.kipBtn": {
                     display: "none"
-                },
-                ".formChildren > div.arrayChild .next.kipBtn": {
-                    display: "block"
                 }
             };
             return ArrayChildElement;
@@ -11717,7 +11911,7 @@ var KIP;
              */
             FilePathElement.prototype._onChange = function () {
                 // check if the link is the one that changed, and if so, update that
-                if (this._tempLink) {
+                if (!KIP.isNullOrUndefined(this._tempLink)) {
                     return this._onLinkChange();
                 }
                 // quit if we can't turn this element into a string (rare)
@@ -11737,7 +11931,7 @@ var KIP;
             };
             FilePathElement.prototype._onLinkChange = function () {
                 var out = this._standardValidation(this._tempLink); // Check if we can set that link
-                this._tempLink = ""; // Clear it in either case
+                this._tempLink = null; // Clear it in either case
                 return out; // Quit with the result
             };
             FilePathElement.prototype.update = function (data) {
@@ -11997,6 +12191,7 @@ var KIP;
                 _this._hidden = true;
                 _this._additionalButtons = options.addlButtons || [];
                 _this._hasChanges = false;
+                _this._canSaveTracker = { hasMissingRequired: false, hasErrors: false };
                 _this._colors = options.colors || ["#4A5", "#284"];
                 _this._applyColors();
                 // handle listeners
@@ -12010,7 +12205,7 @@ var KIP;
             Object.defineProperty(Form.prototype, "data", {
                 /** get the appropriate data out of this form */
                 get: function () {
-                    return this._coreFormElem.save();
+                    return this._coreFormElem.save(true);
                 },
                 enumerable: true,
                 configurable: true
@@ -12050,9 +12245,9 @@ var KIP;
                 }
                 // Create the elements that are only used for the popup version of the form
                 KIP.addClass(this._elems.base, "popup");
-                this._elems.overlay = KIP.createSimpleElement("", "overlay", "", null, null, this._elems.base);
+                this._elems.overlay = KIP.createSimpleElement("", "formOverlay", "", null, null, this._elems.base);
                 this._elems.overlay.appendChild(this._elems.background);
-                this._elems.closeButton = KIP.createSimpleElement("", "close kipBtn", "", null, null, this._elems.background);
+                this._elems.closeButton = KIP.createSimpleElement("", "close kipBtn", "x", null, null, this._elems.background);
             };
             /**...........................................................................
              * _createButtons
@@ -12065,7 +12260,7 @@ var KIP;
                 this._elems.buttons = KIP.createSimpleElement("", "kipBtns", "", null, null, this._elems.background);
                 this._elems.saveButton = KIP.createSimpleElement("", "kipBtn save", "Save", null, null, this._elems.buttons);
                 this._elems.saveButton.addEventListener("click", function () {
-                    _this.save();
+                    _this.trySave();
                     _this.hide();
                 });
                 this._elems.cancelButton = KIP.createSimpleElement("", "kipBtn cancel", "Cancel", null, null, this._elems.buttons);
@@ -12124,10 +12319,28 @@ var KIP;
                     },
                     uniqueId: this._id + "|form"
                 });
+                // add listener for savable changes
+                this._addSaveButtonUpdater();
                 // add the section to the overall form UI
                 this._coreFormElem.render(this._elems.formContent);
             };
             //#endregion
+            Form.prototype._addSaveButtonUpdater = function () {
+                var _this = this;
+                KIP.Events.addEventListener(Forms.FORM_SAVABLE_CHANGE, {
+                    func: function (event) {
+                        var canSave = _this._canSave();
+                        if (!canSave) {
+                            _this._elems.saveButton.title = _this._getCannotSaveMessage();
+                            KIP.addClass(_this._elems.saveButton, "disabled");
+                        }
+                        else {
+                            _this._elems.saveButton.title = "";
+                            KIP.removeClass(_this._elems.saveButton, "disabled");
+                        }
+                    }
+                });
+            };
             //#region DATA MANIPULATIONS
             /**...........................................................................
              * save
@@ -12137,12 +12350,75 @@ var KIP;
              * @returns The data contained in the form
              * ...........................................................................
              */
-            Form.prototype.save = function () {
+            Form.prototype._save = function () {
                 var data = this._coreFormElem.save();
                 // Alert any listeners of this particular form that 
                 this._notifySaveListeners(data);
                 this._hasChanges = false;
                 return data;
+            };
+            /**...........................................................................
+             * trySave
+             * ...........................................................................
+             * Attempt to save the form
+             * ...........................................................................
+             */
+            Form.prototype.trySave = function () {
+                if (KIP.hasClass(this._elems.saveButton, "disabled")) {
+                    return null;
+                }
+                if (!this._canSave()) {
+                    this._showCannotSaveMessage();
+                    return null;
+                }
+                else {
+                    return this._save();
+                }
+            };
+            /**...........................................................................
+             * _canSave
+             * ...........................................................................
+             * Check with our elements that we are able to save
+             * ...........................................................................
+             */
+            Form.prototype._canSave = function () {
+                this._canSaveTracker = this._coreFormElem.canSave();
+                return !(this._canSaveTracker.hasErrors || this._canSaveTracker.hasMissingRequired);
+            };
+            /**...........................................................................
+             * _showCannotSaveMessage
+             * ...........................................................................
+             * Show popup indicating why we couldn't save this form
+             * ...........................................................................
+             */
+            Form.prototype._showCannotSaveMessage = function () {
+                var msg = this._getCannotSaveMessage();
+                if (!msg) {
+                    return;
+                }
+                var popup = new KIP.ErrorPopup(msg, "Couldn't Save");
+                popup.setThemeColor(0, this._colors[0]);
+                popup.setThemeColor(1, this._colors[1]);
+                popup.draw(document.body);
+            };
+            /**...........................................................................
+             * _getCannotSaveMessage
+             * ...........................................................................
+             * Determine what message to show as to why the form cannot be saved
+             * ...........................................................................
+             */
+            Form.prototype._getCannotSaveMessage = function () {
+                var msg = "";
+                if (this._canSaveTracker.hasErrors && this._canSaveTracker.hasMissingRequired) {
+                    msg = "This form has missing data and errors; correct errors and fill in all required fields before saving.";
+                }
+                else if (this._canSaveTracker.hasErrors) {
+                    msg = "There are some errors in your form; correct them before saving.";
+                }
+                else if (this._canSaveTracker.hasMissingRequired) {
+                    msg = "There are some fields with missing data; fill them in before saving.";
+                }
+                return msg;
             };
             /**...........................................................................
              * _notifySaveListeners
@@ -12348,11 +12624,10 @@ var KIP;
             /** handle standard styles for the form */
             Form._uncoloredStyles = {
                 ".kipForm": {
-                    borderRadius: "2px",
-                    backgroundColor: "#FFF",
-                    width: "60%",
-                    marginLeft: "20%",
-                    padding: "5px",
+                    margin: "0",
+                    padding: "0",
+                    width: "100%",
+                    height: "100%",
                     fontFamily: "OpenSansLight,Segoe UI,Helvetica",
                     fontSize: "1.2em",
                     position: "inherit",
@@ -12361,20 +12636,43 @@ var KIP;
                 ".kipForm.hidden": {
                     display: "none"
                 },
-                ".kipForm overlay": {
-                    position: "absolute",
+                ".kipForm .formOverlay": {
+                    position: "fixed",
                     width: "100%",
                     height: "100%",
                     top: "0",
                     left: "0",
                     backgroundColor: "rgba(0,0,0,.6)"
                 },
+                ".kipForm .background": {
+                    borderRadius: "2px",
+                    backgroundColor: "#FFF",
+                    width: "60%",
+                    marginLeft: "20%",
+                    maxHeight: "90%",
+                    position: "relative",
+                    display: "flex",
+                    flexDirection: "column"
+                },
+                ".kipForm .formOverlay .background": {
+                    marginTop: "2%"
+                },
                 ".kipForm .formContent": {
-                    marginRight: "10px"
+                    overflowY: "auto",
+                    position: "relative",
+                    padding: "5px",
+                    paddingRight: "15px",
+                    flexGrow: "1"
                 },
                 ".kipForm .kipBtns": {
                     display: "flex",
-                    justifyContent: "flex-end"
+                    justifyContent: "flex-end",
+                    padding: "3px 5px",
+                    flexShrink: "0",
+                    zIndex: "5"
+                },
+                ".kipForm.popup .kipBtns": {
+                    boxShadow: "0px -2px 2px 1px rgba(0,0,0,.15)"
                 },
                 ".kipForm .kipBtn": {
                     padding: "5px 20px",
@@ -12387,7 +12685,7 @@ var KIP;
                     textAlign: "center",
                     transition: "all ease-in-out .1s"
                 },
-                ".kipForm .kipBtn:hover, .kipForm .kipBtn.selected": {
+                ".kipForm .kipBtn:not(.disabled):hover, .kipForm .kipBtn.selected": {
                     transform: "scale(1.05)"
                 },
                 ".kipForm .save.kipBtn": {
@@ -12395,20 +12693,26 @@ var KIP;
                     color: "#FFF",
                     width: "20%"
                 },
+                ".kipForm .save.kipBtn.disabled": {
+                    backgroundColor: "#888",
+                    color: "#FFF",
+                    opacity: "0.5",
+                    cursor: "unset"
+                },
                 ".kipForm .close.kipBtn": {
-                    borderRadius: "10px",
+                    borderRadius: "100%",
                     border: "2px solid #999",
-                    width: "15px",
-                    height: "15px",
+                    width: "24px",
+                    height: "24px",
                     backgroundColor: "#999",
                     color: "#FFF",
                     padding: "0",
-                    fontSize: "0.6em",
                     position: "absolute",
-                    top: "-7px",
-                    left: "calc(100% - 7px)",
+                    top: "-12px",
+                    left: "calc(100% - 12px)",
                     boxSizing: "content-box",
-                    textAlign: "center"
+                    textAlign: "center",
+                    fontSize: "20px"
                 },
                 ".kipForm .cancel.kipBtn": {
                     backgroundColor: "#999",
@@ -12424,6 +12728,11 @@ var KIP;
         KIP.Events.createEvent({
             name: "Form Element Changed",
             key: Forms.FORM_ELEM_CHANGE
+        });
+        Forms.FORM_SAVABLE_CHANGE = "formsavablechange";
+        KIP.Events.createEvent({
+            name: "Form Savable Change",
+            key: Forms.FORM_SAVABLE_CHANGE
         });
         //#endregion
     })(Forms = KIP.Forms || (KIP.Forms = {}));
@@ -13436,7 +13745,6 @@ var KIP;
                 this._data = this._defaultValue;
             };
             SingleSelectButtonElem.prototype.setThemeColor = function (idx, color, noReplace) {
-                debugger;
                 _super.prototype.setThemeColor.call(this, idx, color, noReplace);
             };
             return SingleSelectButtonElem;
@@ -14310,7 +14618,714 @@ var KIP;
 // };
 // 	}
 // }
-/*globals KIP,window,console*/
+var KIP;
+(function (KIP) {
+    var SVG;
+    (function (SVG) {
+        ;
+        /**...........................................................................
+         * @class 	SVGDrawable
+         * ...........................................................................
+         * Create a drawable SVG canvas
+         * @version 1.1
+         * @author	Kip Price
+         * ...........................................................................
+         */
+        var SVGDrawable = /** @class */ (function (_super) {
+            __extends(SVGDrawable, _super);
+            //#endregion
+            /**...........................................................................
+             * Constructs a basic SVG canvas
+             * @param 	id     The ID of the canvas
+             * @param 	bounds The real-world (e.g. in window) bounds of the canvas
+             * @param 	opts   Any options that should be applied to the canvas
+             * ...........................................................................
+             */
+            function SVGDrawable(id, bounds, opts) {
+                var _this = _super.call(this, { id: id }) || this;
+                /**
+                 * _saveOriginalView
+                 */
+                _this._saveOriginalView = function () {
+                    if (!this.originalView) {
+                        this.originalView = {
+                            x: this.viewX,
+                            y: this.viewY,
+                            w: this.viewW,
+                            h: this.viewH
+                        };
+                    }
+                };
+                _this._bounds = bounds;
+                _this._nonScaled = [];
+                // Initialize the default maxima / minima
+                _this._initializeInternalSizing();
+                // Reconcile options
+                var defaults = _this._createDefaultOptions();
+                _this._options = KIP.reconcileOptions(opts, defaults);
+                // Initiate collections
+                _this._svgElems = new KIP.Collection();
+                _this._nonScaled = new Array();
+                // Add event listeners
+                _this._addEventListeners();
+                return _this;
+            }
+            Object.defineProperty(SVGDrawable, "_nextId", {
+                get: function () {
+                    SVGDrawable._lastId += 1;
+                    return SVGDrawable._lastId.toString();
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SVGDrawable.prototype, "view", {
+                get: function () { return this._view; },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SVGDrawable.prototype, "style", {
+                get: function () { return this._style; },
+                enumerable: true,
+                configurable: true
+            });
+            /**...........................................................................
+             * _initializeInternalSizing
+             * ...........................................................................
+             * Make sure we have default values for extrema
+             * ...........................................................................
+             */
+            SVGDrawable.prototype._initializeInternalSizing = function () {
+                this._extrema = {
+                    min: {
+                        x: 1000000,
+                        y: 1000000
+                    },
+                    max: {
+                        x: 0,
+                        y: 0
+                    }
+                };
+                // Initialize the viewport
+                this._view = {
+                    x: 0,
+                    y: 0,
+                    w: 0,
+                    h: 0
+                };
+            };
+            /**...........................................................................
+             * _createDefaultOptions
+             * ...........................................................................
+             * Get the set of default options
+             * @returns	The created default options
+             * ...........................................................................
+             */
+            SVGDrawable.prototype._createDefaultOptions = function () {
+                var defaults = {
+                    gutter: 1,
+                    auto_resize: true,
+                    zoom_x: 0.08,
+                    zoom_y: 0.08,
+                    pan_x: true,
+                    pan_y: true,
+                    prevent_events: false
+                };
+                return defaults;
+            };
+            /**...........................................................................
+             * _createElements
+             * ...........................................................................
+             * Create the elements needed for this SVG drawable
+             * ...........................................................................
+             */
+            SVGDrawable.prototype._createElements = function () {
+                // Create the base element
+                this.base = KIP.createSVG(this._id, this._bounds.w, this._bounds.h);
+                // Create the definitions element
+                this._definitionsElement = KIP.createSVGElem("defs");
+                this.base.appendChild(this._definitionsElement);
+            };
+            //#region EVENT HANDLING
+            /**...........................................................................
+             * _addEventListeners
+             * ...........................................................................
+             * Adds the relevant event listeners for the SVG object
+             * ...........................................................................
+             */
+            SVGDrawable.prototype._addEventListeners = function () {
+                var _this = this;
+                // Add the wheel listener to the SVG element
+                this.base.addEventListener("wheel", function (e) {
+                    var delta = e.deltaY;
+                    delta = (delta > 0) ? 1 : -1;
+                    _this._onZoom(delta);
+                });
+                // Add the drag listeners
+                KIP.makeDraggable(this.base, {
+                    target: document.body,
+                    onMove: function (delta) {
+                        _this._onPan(delta);
+                    }
+                });
+            };
+            /**...........................................................................
+             * _onZoom
+             * ...........................................................................
+             * handle zooming in & out
+             * @param	direction	If positive, zooms in. If negative, zooms out
+             * ...........................................................................
+             */
+            SVGDrawable.prototype._onZoom = function (direction) {
+                var xAmt = this._options.zoom_x * direction;
+                var yAmt = this._options.zoom_y * direction;
+                var xUnit = this._view.w * xAmt;
+                var yUnit = this._view.h * yAmt;
+                // Resize appropriately in the x-dimension
+                if (this._options.zoom_x) {
+                    this._view.x -= xUnit;
+                    this._view.w += (2 * xUnit);
+                }
+                // Resive appropriately in the y-dimension
+                if (this._options.zoom_y) {
+                    this._view.y -= yUnit;
+                    this._view.h += (2 * yUnit);
+                }
+                // refresh the viewbox attribute
+                this.generateViewboxAttribute(true);
+            };
+            /**...........................................................................
+             * _onPan
+             * ...........................................................................
+             * handle panning the SVG canvas
+             * @param	delta	The amount to pan by
+             * ...........................................................................
+             */
+            SVGDrawable.prototype._onPan = function (delta) {
+                if (this._options.pan_x) {
+                    this._view.x += delta.x;
+                }
+                if (this._options.pan_y) {
+                    this._view.y += delta.y;
+                }
+                // Update the view box
+                this.generateViewboxAttribute(true);
+            };
+            Object.defineProperty(SVGDrawable.prototype, "width", {
+                //#endregion
+                //#region WIDTH AND HEIGHT CALCULATION
+                /**...........................................................................
+                 * Sets the real-world width of the canvas
+                 * @param 	w 	The width to set
+                 * ...........................................................................
+                 */
+                set: function (w) {
+                    this._bounds.w = w;
+                    this._elems.base.setAttribute("width", w.toString());
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SVGDrawable.prototype, "height", {
+                /**...........................................................................
+                 * Sets the real-world height of the canvas
+                 * @param 	h 	The height to set
+                 * ...........................................................................
+                 */
+                set: function (h) {
+                    this._bounds.h = h;
+                    this._elems.base.setAttribute("height", h.toString());
+                },
+                enumerable: true,
+                configurable: true
+            });
+            /**...........................................................................
+             * generateViewboxAttribute
+             * ...........................................................................
+             * Create a string that can be used in the viewbox attribute for the SVG
+             * @param  	set		True if we should also set the attribute after generating it
+             * @returns The viewbox attribute for the current view
+             * ...........................................................................
+             */
+            SVGDrawable.prototype.generateViewboxAttribute = function (set) {
+                var v_box = "";
+                // Make sure we have no negative widths or heights
+                if (this._view.w < 0) {
+                    this._view.w = 1;
+                }
+                if (this._view.h < 0) {
+                    this._view.h = 1;
+                }
+                // Generate the view box string
+                v_box = this._view.x + " " + this._view.y + " " + this._view.w + " " + this._view.h;
+                // Set the attribute if requested
+                if (set) {
+                    this.base.setAttribute("viewbox", v_box);
+                }
+                // Return the viewbox value
+                return v_box;
+            };
+            /**...........................................................................
+             * _calculateView
+             * ...........................................................................
+             * Calculate what the view of the SVG should be, based on the extrema
+             * @returns True if the extrema were appropriately calculated
+             * ...........................................................................
+             */
+            SVGDrawable.prototype._calculateView = function () {
+                // If we shouldn't auto-resize,
+                if (!this._options.auto_resize) {
+                    return false;
+                }
+                // Update to the extrema
+                this._view.x = this._extrema.min.x;
+                this._view.y = this._extrema.min.y;
+                this._view.w = (this._extrema.max.x - this._extrema.min.x);
+                this._view.h = (this._extrema.max.y - this._extrema.min.y);
+                // Return that we successfully updated the view
+                return true;
+            };
+            /**...........................................................................
+             * _updateExtrema
+             * ...........................................................................
+             * Updates the extreme points of this SVG element after adding an element
+             * @param 	extrema 	The extrema of the element just added
+             * ...........................................................................
+             */
+            SVGDrawable.prototype._updateExtrema = function (extrema) {
+                // Update the minima if appropriate
+                if (extrema.min.x < this._extrema.min.x) {
+                    this._extrema.min.x = extrema.min.x;
+                }
+                if (extrema.min.y < this._extrema.min.y) {
+                    this._extrema.min.y = extrema.min.y;
+                }
+                // Update the maxima is appropriate
+                if (extrema.max.x > this._extrema.max.x) {
+                    this._extrema.max.x = extrema.max.x;
+                }
+                if (extrema.max.y > this._extrema.max.y) {
+                    this._extrema.max.y = extrema.max.y;
+                }
+            };
+            //#endregion
+            //#region CONVERSIONS
+            /**...........................................................................
+             * calculateSVGCoordinates
+             * ...........................................................................
+             * Calculates the SVG coordinates from real coordinates
+             * @param   pt	The real coordinates to convert
+             * @returns The SVG coordinates for this real point
+             * ...........................................................................
+             */
+            SVGDrawable.prototype.calculateSVGCoordinates = function (pt) {
+                return this._convertCoordinates(pt, this._view, this._bounds);
+            };
+            /**...........................................................................
+             * calculateScreenCoordinates
+             * ...........................................................................
+             * Calculate the real coordinates from SVG coordinates
+             * @param 	pt 	The point to convert to real coordinates
+             * @returns	The real coordinates for this SVG point
+             * ...........................................................................
+             */
+            SVGDrawable.prototype.calculateScreenCoordinates = function (pt) {
+                return this._convertCoordinates(pt, this._bounds, this._view);
+            };
+            /**...........................................................................
+             * _convertCoordinates
+             * ...........................................................................
+             *
+             * ...........................................................................
+             */
+            SVGDrawable.prototype._convertCoordinates = function (pt, numerator, denominator) {
+                var out;
+                var x_ratio = (numerator.w / denominator.w);
+                var y_ratio = (numerator.h / denominator.h);
+                out = {
+                    x: (x_ratio * (pt.x - denominator.x)) + numerator.x,
+                    y: (y_ratio * (pt.y - denominator.y)) + numerator.y
+                };
+                return out;
+            };
+            SVGDrawable.prototype._convertDistance = function (measure, numerator, denominator) {
+                var ratio = numerator / denominator;
+                return (measure * ratio);
+            };
+            SVGDrawable.prototype.calculateSVGWidth = function (width) {
+                return this._convertDistance(width, this._view.w, this._bounds.w);
+            };
+            SVGDrawable.prototype.calculateSVGHeight = function (height) {
+                return this._convertDistance(height, this._view.h, this._bounds.h);
+            };
+            SVGDrawable.prototype.calculateScreenWidth = function (width) {
+                return this._convertDistance(width, this._bounds.w, this._view.w);
+            };
+            SVGDrawable.prototype.calculateScreenHeight = function (height) {
+                return this._convertDistance(height, this._bounds.h, this._view.h);
+            };
+            //#endregion
+            //#region ADD CHILDREN
+            /**...........................................................................
+             * _addChild
+             * ...........................................................................
+             * @param 	type
+             * @param 	attributes
+             * @param 	parentGroup
+             * @returns	The created SVG element
+             * ...........................................................................
+             */
+            SVGDrawable.prototype._addChild = function (type, attributes, parentGroup) {
+                // Throw an error if no data was provided
+                if (type === "") {
+                    throw new Error("no SVG element type provided");
+                }
+                var elem = KIP.createSVGElem(type, attributes);
+                // Add to the appropriate parent
+                if (parentGroup) {
+                    parentGroup.appendChild(elem);
+                }
+                else {
+                    this.base.appendChild(elem);
+                }
+                // Add to our collections
+                if (attributes.unscalable) {
+                    this._nonScaled.push(elem);
+                }
+                if (attributes["id"]) {
+                    this._svgElems.addElement(attributes["id"], elem);
+                }
+                return elem;
+            };
+            SVGDrawable.prototype._initializeAttributes = function (attr, group) {
+                if (!attr) {
+                    attr = {};
+                }
+                // initialize the appropriate parent
+                if (group) {
+                    attr.parent = group;
+                }
+                else {
+                    attr.parent = this.base;
+                }
+                // initialize the ID of the child
+                if (!attr.id) {
+                    attr.id = SVGDrawable._nextId;
+                }
+                return attr;
+            };
+            SVGDrawable.prototype._addChildElement = function (elem) {
+                //this._elems.addElement(elem.id, elem);
+                if (elem.preventScaling) {
+                    //this._nonScaled.push(elem);
+                }
+                if (this._options.auto_resize) {
+                    this._updateExtrema(elem.extrema);
+                }
+            };
+            //#region ADD PATH
+            /**
+             * Adds a path to the SVG canvas
+             * @param   {IPathPoint[]} points   The points to add to the path
+             * @param   {IAttributes}  attr     Any attributes that should be applied
+             * @param   {SVGElement}   group    The group this path should be added to
+             * @param   {boolean}      noFinish True if we should finish the path without closing
+             * @returns {SVGElement}            The path that was created
+             */
+            SVGDrawable.prototype.addPath = function (points, attr, group, noFinish) {
+                attr = this._initializeAttributes(attr, group);
+                attr.noFinish = noFinish;
+                var path = new SVG.PathElement(points, attr);
+                this._addChildElement(path);
+                return path.base;
+            };
+            //#endregion
+            //#region ADD RECTANGLE
+            /**...........................................................................
+             * addRectangle
+             * ...........................................................................
+             * @param x
+             * @param y
+             * @param width
+             * @param height
+             * @param attr
+             * @param group
+             * ...........................................................................
+             */
+            SVGDrawable.prototype.addRectangle = function (x, y, width, height, attr, group) {
+                attr = this._initializeAttributes(attr, group);
+                var rect = new SVG.RectangleElement(x, y, width, height, attr);
+                this._addChildElement(rect);
+                return rect.base;
+            };
+            //#endregion
+            //#region ADD CIRCLE
+            /**...........................................................................
+             * addCircle
+             * ...........................................................................
+             * adds a circle to the SVG canvas
+             * @param	centerPt
+             * @param	radius
+             * @param	attr
+             * @param	group
+             * @returns	The created circle
+             * ...........................................................................
+             */
+            SVGDrawable.prototype.addCircle = function (centerPt, radius, attr, group) {
+                attr = this._initializeAttributes(attr, group);
+                var circle = new SVG.CircleElement(centerPt, radius, attr);
+                this._addChildElement(circle);
+                return circle.base;
+            };
+            //#endregion
+            //#endregion
+            //#region ADD POLYGON
+            /**...........................................................................
+             * regularPolygon
+             * ...........................................................................
+             * creates a regular polygon to the SVG canvas
+             * @param   centerPt The central point of the polygon
+             * @param   sides    The number of sides of the polygon
+             * @param   radius   The radius of the polygon
+             * @param   attr     Any additional attributes
+             * @param   group    The group the polygon should be added to
+             * @returns The created polygon on the SVG Canvas
+             * ...........................................................................
+             */
+            SVGDrawable.prototype.regularPolygon = function (centerPt, sides, radius, attr, group) {
+                attr = this._initializeAttributes(attr, group);
+                var polygon = new SVG.PolygonElement(centerPt, sides, radius, attr);
+                this._addChildElement(polygon);
+                return polygon.base;
+            };
+            //#endregion
+            //#region ADD STAR
+            /**...........................................................................
+             * addRegularStar
+             * ...........................................................................
+             * Creates a regular star on the SVG canvas
+             * @param   centerPt      	The point at the center of the star
+             * @param   numberOfPoints 	The number of points of this star
+             * @param   radius        	[description]
+             * @param   innerRadius   	[description]
+             * @param   attr          	[description]
+             * @param   group         	[description]
+             * @returns The created star
+             * ...........................................................................
+             */
+            SVGDrawable.prototype.addRegularStar = function (centerPt, numberOfPoints, radius, innerRadius, attr, group) {
+                attr = this._initializeAttributes(attr, group);
+                var star = new SVG.StarElement(centerPt, numberOfPoints, radius, innerRadius, attr);
+                this._addChildElement(star);
+                return star.base;
+            };
+            //#endregion
+            //#region ADD TEXT
+            /**...........................................................................
+             * addtext
+             * ...........................................................................
+             * Adds a text element to the SVG canvas
+             * @param   text     The text to add
+             * @param   point    The point at which to add the point
+             * @param   originPt If provided, the origin point within the text element that defines where the text is drawn
+             * @param   attr     Any attributes that should be applied to the element
+             * @param   group    The group to add this element to
+             * @returns The text element added to the SVG
+             * ...........................................................................
+             */
+            SVGDrawable.prototype.addText = function (text, point, originPt, attr, group) {
+                attr = this._initializeAttributes(attr, group);
+                var txt = new SVG.TextElement(attr);
+                this._addChildElement(txt);
+                return txt.base;
+            };
+            SVGDrawable.prototype.addFlowableText = function (text, bounds, attr, group) {
+                //TODO: Add flowable text
+                return null;
+            };
+            //#endregion
+            //#region ADD GROUP
+            /**...........................................................................
+             * addGroup
+             * ...........................................................................
+             * @param	attr
+             * @param 	group
+             * @returns	The created element
+             * ...........................................................................
+             */
+            SVGDrawable.prototype.addGroup = function (attr, group) {
+                attr = this._initializeAttributes(attr, group);
+                var grp = new SVG.GroupElement(attr);
+                this._addChildElement(grp);
+                return grp.base;
+            };
+            //#endregion
+            //#region ADD GRADIENTS
+            /**...........................................................................
+             * addGradient
+             * ...........................................................................
+             * Adds a gradient to the SVG canvas
+             * @param   type       The type of gradient to add
+             * @param   points     What points describe the gradient
+             * @param   transforms 	 ???
+             * @returns he created gradient
+             * ...........................................................................
+             */
+            SVGDrawable.prototype.addGradient = function (type, points, transforms) {
+                return "";
+                //TODO: the real thing
+            };
+            //#endregion
+            //#region ADD PATTERNS
+            // TODO: add pattern
+            // public addPattern () {
+            // }
+            // TODO: add stipple pattern
+            //public addStipplePattern () {
+            //}
+            //#endregion
+            //#region ADD SHAPES
+            /**
+             * Adds a particular shape to the SVG canvas
+             * @param   shapeType The type of shape to add
+             * @param   scale     What scale the shape should be drawn at
+             * @param   attr      Any attributes that should be applied to the element
+             * @param   group     What group the element should be added to
+             * @returns The created shape
+             */
+            SVGDrawable.prototype.addShape = function (shapeType, scale, attr, group) {
+                // Use our default scale if one wasn't passed in
+                if (!scale) {
+                    scale = 1;
+                }
+                // Draw the appropriate shape
+                switch (shapeType) {
+                    case SVG.SVGShapeEnum.CHECKMARK:
+                        return this._addCheckShape(scale, attr, group);
+                    case SVG.SVGShapeEnum.X:
+                        return this._addExShape(scale, attr, group);
+                    case SVG.SVGShapeEnum.PLUS:
+                        return this._addPlusShape(scale, attr, group);
+                }
+            };
+            /**
+             * Adds a checkmark to the canvas with the provided scale
+             */
+            SVGDrawable.prototype._addCheckShape = function (scale, attr, group) {
+                attr = this._initializeAttributes(attr, group);
+                var checkmark = new SVG.CheckElement(null, attr);
+                this._addChildElement(checkmark);
+                return checkmark.base;
+            };
+            /**
+             * Adds an 'ex' to the canvas with the provided scale
+             */
+            SVGDrawable.prototype._addExShape = function (scale, attr, group) {
+                attr = this._initializeAttributes(attr, group);
+                var exElem = new SVG.ExElement(null, attr);
+                this._addChildElement(exElem);
+                return exElem.base;
+            };
+            /**
+             * Adds a plus to the canvas with the provided scale
+             */
+            SVGDrawable.prototype._addPlusShape = function (scale, attr, group) {
+                attr = this._initializeAttributes(attr, group);
+                var plusSymbol = new SVG.PlusElement(null, attr);
+                this._addChildElement(plusSymbol);
+                return plusSymbol.base;
+            };
+            //#endregion
+            /**...........................................................................
+             * _convertPointsToPathPoints
+             * ...........................................................................
+             * Helper function to turn an array of IPoint elements to IPathPoint elements
+             * @param   points 	The points to convert
+             * @param   scale  	The scale that should be applied to the IPoint before turning into a IPathPoint
+             * @returns Array of scaled IPathPoints
+             * ...........................................................................
+             */
+            SVGDrawable.prototype._convertPointsToPathPoints = function (points, scale) {
+                if (!scale) {
+                    scale = 1;
+                }
+                var pathPoints = [];
+                // Loop through each of the points
+                for (var _i = 0, points_2 = points; _i < points_2.length; _i++) {
+                    var pt = points_2[_i];
+                    pt.x *= scale; // Scale the x dimension
+                    pt.y *= scale; // Scale the y dimension
+                    pathPoints.push(pt);
+                }
+                return pathPoints;
+            };
+            SVGDrawable.prototype.assignStyle = function (element) {
+                this._style.assignStyle(element);
+            };
+            //
+            /**...........................................................................
+             * rotateElement
+             * ...........................................................................
+             * Rotates an element around a particular point
+             * @param   elem         The element to rotate
+             * @param   degree       How many degrees to rotate the element
+             * @param   rotateAround What point to rotate around
+             * @returns The rotated SVG Element
+             * ...........................................................................
+             */
+            SVGDrawable.prototype.rotateElement = function (elem, degree, rotateAround) {
+                var box;
+                // If we don't have a point around which to rotate, set it to be the center of the element
+                if (!rotateAround) {
+                    box = this.measureElement(elem);
+                    rotateAround = {
+                        x: box.x + (box.w / 2),
+                        y: box.y + (box.h / 2)
+                    };
+                }
+                elem.setAttribute("transform", "rotate(" + degree + ", " + rotateAround.x + ", " + rotateAround.y + ")");
+                return elem;
+            };
+            //TODO: add SVG ANIMATIONS
+            SVGDrawable.prototype.animateElement = function () { };
+            /**...........................................................................
+             * measureElement
+             * ...........................................................................
+             * Measures an element in the SVG canvas
+             * @param   element 	The element to measure
+             * @returns The dimensions of the element, in SVG coordinates
+             * ...........................................................................
+             */
+            SVGDrawable.prototype.measureElement = function (element) {
+                var box;
+                var addedParent;
+                // Add our base element to the view if it doesn't have anything
+                if (!this.base.parentNode) {
+                    document.body.appendChild(this.base);
+                    addedParent = true;
+                }
+                // Get the bounding box for element
+                box = element.getBBox();
+                // If we had to add the base element to the document, remove it
+                if (addedParent) {
+                    document.body.removeChild(this.base);
+                }
+                // Build our return rectangle
+                var rect = {
+                    x: box.x,
+                    y: box.y,
+                    w: box.width,
+                    h: box.height
+                };
+                return rect;
+            };
+            //#region ID TRACKING
+            SVGDrawable._lastId = 0;
+            return SVGDrawable;
+        }(KIP.Drawable));
+        SVG.SVGDrawable = SVGDrawable;
+    })(SVG = KIP.SVG || (KIP.SVG = {}));
+})(KIP || (KIP = {}));
+///<reference path="../svg/svgDrawable.ts" />
 var KIP;
 (function (KIP) {
     var Old;
@@ -14387,7 +15402,7 @@ var KIP;
                     _this.height = window.innerHeight;
                 }
                 // Create a SVG canvas for the project items
-                SVGDrawable.call(_this, _this.id, "", { aspect: "none", zoomY: false });
+                KIP.SVG.SVGDrawable.call(_this, _this.id, "", { aspect: "none", zoomY: false });
                 // Set up the view for the object
                 view = _this.SetupView();
                 _this.autoResize = false;
@@ -14962,11 +15977,11 @@ var KIP;
                     this.lineProperty.width = 0;
                     this.lineProperty.color = "rgba(0,0,0,0)";
                     event = this.addPath([
-                        { point: { x: ev.x - dx, y: ev.y - dy } },
-                        { point: { x: ev.x - dx, y: ev.y } },
-                        { point: { x: ev.x, y: ev.y + (0.5 * dy) } },
-                        { point: { x: ev.x + dx, y: ev.y } },
-                        { point: { x: ev.x + dx, y: ev.y - dy } }
+                        { x: ev.x - dx, y: ev.y - dy },
+                        { x: ev.x - dx, y: ev.y },
+                        { x: ev.x, y: ev.y + (0.5 * dy) },
+                        { x: ev.x + dx, y: ev.y },
+                        { x: ev.x + dx, y: ev.y - dy }
                     ], { id: "ev." + this.eventCnt }, item.eventGrp);
                     // Draw the small event line
                 }
@@ -15032,7 +16047,7 @@ var KIP;
                     this.eventGrp.appendChild(item.eventGrp);
                     item.expanded = false;
                     this.expanded = null;
-                    this._elems.base.style.cursor = "-webkit-grab";
+                    //this._elems.base.style.cursor = "-webkit-grab";
                     item.grp.removeAttribute("transform");
                     item.eventGrp.removeAttribute("transform");
                     if (!this.alwaysShowEvents) {
@@ -15059,7 +16074,7 @@ var KIP;
                     this._parent.appendChild(item.addlInfoExpanded);
                     item.expanded = true;
                     this.expanded = item;
-                    this._elems.base.style.cursor = "default";
+                    //this._elems.base.style.cursor = "default";
                     // Calculate the appropriate coordinates
                     w = document.documentElement.clientWidth || window.innerWidth;
                     h = document.documentElement.clientHeight || window.innerHeight;
@@ -16023,7 +17038,7 @@ var KIP;
             };
             ;
             return ProjectWindow;
-        }(SVGDrawable));
+        }(KIP.SVG.SVGDrawable));
         Old.ProjectWindow = ProjectWindow;
     })(Old = KIP.Old || (KIP.Old = {}));
 })(KIP || (KIP = {}));
@@ -16526,7 +17541,7 @@ var KIP;
     }
     KIP.showYesNoForm = showYesNoForm;
 })(KIP || (KIP = {}));
-///<reference path="drawable.ts" />
+///<reference path="../drawable.ts" />
 var KIP;
 (function (KIP) {
     /**...........................................................................
@@ -17293,363 +18308,225 @@ var KIP;
 (function (KIP) {
     var SVG;
     (function (SVG) {
-        ;
-        /**
-         * @class SVGGradientTypeEnum
-         *
-         * Handle different types of gradients
+        /**...........................................................................
+         * @class   SVGElem
+         * ...........................................................................
+         * Creates an element on an SVG Drawable
+         * @version 1.1
+         * @author  Kip Price
+         * ...........................................................................
          */
-        var SVGGradientTypeEnum;
-        (function (SVGGradientTypeEnum) {
-            SVGGradientTypeEnum[SVGGradientTypeEnum["LINEAR"] = 1] = "LINEAR";
-            SVGGradientTypeEnum[SVGGradientTypeEnum["RADIAL"] = 2] = "RADIAL";
-        })(SVGGradientTypeEnum = SVG.SVGGradientTypeEnum || (SVG.SVGGradientTypeEnum = {}));
+        var SVGElem = /** @class */ (function (_super) {
+            __extends(SVGElem, _super);
+            //#endregion
+            /**...........................................................................
+             * Creates an SVG element
+             * @param   attributes  The attributes to create this element with
+             * ...........................................................................
+             */
+            function SVGElem(attributes) {
+                var addlArgs = [];
+                for (var _i = 1; _i < arguments.length; _i++) {
+                    addlArgs[_i - 1] = arguments[_i];
+                }
+                var _this = _super.call(this) || this;
+                // initialize the attributes if they weren't included
+                if (!attributes) {
+                    attributes = {};
+                }
+                // send all arguments to the _setAttributes function
+                addlArgs.splice(0, 0, attributes);
+                _this._attributes = _this._setAttributes.apply(_this, addlArgs);
+                // create the elements
+                _this._createElements(_this._attributes);
+                // handle updating the extreme points of this element
+                _this._updateExtrema(_this._attributes);
+                return _this;
+            }
+            Object.defineProperty(SVGElem.prototype, "id", {
+                //#region PROPERTIES
+                /** unique identifier for the element */
+                get: function () { return this._attributes.id; },
+                set: function (id) { this._attributes.id = id; },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SVGElem.prototype, "style", {
+                get: function () { return this._style; },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SVGElem.prototype, "base", {
+                get: function () { return this._elems.base; },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SVGElem.prototype, "preventScaling", {
+                get: function () { return this._preventScaling; },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SVGElem.prototype, "extrema", {
+                get: function () { return this._extrema; },
+                enumerable: true,
+                configurable: true
+            });
+            /**...........................................................................
+             * _shouldSkipCreateElements
+             * ...........................................................................
+             * Determine whether we should allow elements to be drawn as part of the
+             * constructor.
+             *
+             * @returns True, since we always need attributes
+             * ...........................................................................
+             */
+            SVGElem.prototype._shouldSkipCreateElements = function () {
+                return true;
+            };
+            /**...........................................................................
+             * _createElements
+             * ...........................................................................
+             * Create the elements that make up this SVG Element
+             *
+             * @param   attributes  Attributes for this element
+             * ...........................................................................
+             */
+            SVGElem.prototype._createElements = function (attributes) {
+                if (!attributes) {
+                    throw new Error("no attributes provided for SVG Element");
+                }
+                // determine the type of the SVG element
+                var type = attributes.type;
+                delete attributes.type;
+                // Throw an error if no data was provided
+                if (type === "") {
+                    throw new Error("no SVG element type provided");
+                }
+                var elem = KIP.createSVGElem(type, attributes);
+                this._elems = {};
+                this._elems.base = elem;
+                // Add to the appropriate parent
+                if (attributes.parent) {
+                    attributes.parent.appendChild(elem);
+                    delete attributes.parent;
+                }
+                // track that this element should be non-scaling
+                this._preventScaling = attributes.unscalable;
+            };
+            return SVGElem;
+        }(KIP.Drawable));
+        SVG.SVGElem = SVGElem;
+    })(SVG = KIP.SVG || (KIP.SVG = {}));
+})(KIP || (KIP = {}));
+///<reference path="svgElement.ts" />
+var KIP;
+(function (KIP) {
+    var SVG;
+    (function (SVG) {
+        function _isCurvePoint(pt) {
+            return (!!pt.controls);
+        }
+        function _isArcPoint(pt) {
+            return !KIP.isNullOrUndefined(pt.radius);
+        }
         var SVGShapeEnum;
         (function (SVGShapeEnum) {
             SVGShapeEnum[SVGShapeEnum["CHECKMARK"] = 1] = "CHECKMARK";
             SVGShapeEnum[SVGShapeEnum["X"] = 2] = "X";
             SVGShapeEnum[SVGShapeEnum["PLUS"] = 3] = "PLUS";
         })(SVGShapeEnum = SVG.SVGShapeEnum || (SVG.SVGShapeEnum = {}));
-        ;
         /**...........................................................................
-         * @class 	SVGDrawable
+         * @class   PathElement
          * ...........................................................................
-         * Create a drawable SVG canvas
-         * @version 1.1
-         * @author	Kip Price
+         * @version 1.0
+         * @author  Kip Price
          * ...........................................................................
          */
-        var SVGDrawable = /** @class */ (function (_super) {
-            __extends(SVGDrawable, _super);
-            /**...........................................................................
-             * Constructs a basic SVG canvas
-             * @param 	id     The ID of the canvas
-             * @param 	bounds The real-world (e.g. in window) bounds of the canvas
-             * @param 	opts   Any options that should be applied to the canvas
-             * ...........................................................................
-             */
-            function SVGDrawable(id, bounds, opts) {
-                var _this = _super.call(this) || this;
-                /**
-                 * _saveOriginalView
-                 */
-                _this._saveOriginalView = function () {
-                    if (!this.originalView) {
-                        this.originalView = {
-                            x: this.viewX,
-                            y: this.viewY,
-                            w: this.viewW,
-                            h: this.viewH
-                        };
-                    }
-                };
-                _this._bounds = bounds;
-                _this._nonScaled = [];
-                // Create the base element
-                _this.base = KIP.createSVG(id, _this._bounds.w, _this._bounds.h);
-                // Create the definitions element
-                _this._definitionsElement = KIP.createSVGElem("defs");
-                _this.base.appendChild(_this._definitionsElement);
-                // Initialize the default maxima / minima
-                _this._extrema = {
-                    min: {
-                        x: 1000000,
-                        y: 1000000
-                    },
-                    max: {
-                        x: 0,
-                        y: 0
-                    }
-                };
-                // Initialize the viewport
-                _this._view = {
-                    x: 0,
-                    y: 0,
-                    w: 0,
-                    h: 0
-                };
-                // Reconcile options
-                var defaults = {
-                    gutter: 1,
-                    auto_resize: true,
-                    zoom_x: 0.08,
-                    zoom_y: 0.08,
-                    pan_x: true,
-                    pan_y: true,
-                    prevent_events: false
-                };
-                _this._options = KIP.reconcileOptions(opts, defaults);
-                // Initiate collections
-                _this._svgElems = new KIP.Collection();
-                _this._nonScaled = new Array();
-                // Add event listeners
-                _this._addEventListeners();
+        var PathElement = /** @class */ (function (_super) {
+            __extends(PathElement, _super);
+            //#endregion
+            function PathElement(points, attr) {
+                var addlArgs = [];
+                for (var _i = 2; _i < arguments.length; _i++) {
+                    addlArgs[_i - 2] = arguments[_i];
+                }
+                var _this = this;
+                addlArgs.splice(0, 0, points);
+                _this = _super.call(this, attr, addlArgs) || this;
                 return _this;
             }
-            Object.defineProperty(SVGDrawable.prototype, "view", {
-                get: function () { return this._view; },
-                enumerable: true,
-                configurable: true
-            });
-            Object.defineProperty(SVGDrawable.prototype, "style", {
-                get: function () { return this._style; },
-                enumerable: true,
-                configurable: true
-            });
-            Object.defineProperty(SVGDrawable.prototype, "width", {
-                /**...........................................................................
-                 * Sets the real-world width of the canvas
-                 * @param 	w 	The width to set
-                 * ...........................................................................
-                 */
-                set: function (w) {
-                    this._bounds.w = w;
-                    this._elems.base.setAttribute("width", w.toString());
-                },
-                enumerable: true,
-                configurable: true
-            });
-            Object.defineProperty(SVGDrawable.prototype, "height", {
-                /**...........................................................................
-                 * Sets the real-world height of the canvas
-                 * @param 	h 	The height to set
-                 * ...........................................................................
-                 */
-                set: function (h) {
-                    this._bounds.h = h;
-                    this._elems.base.setAttribute("height", h.toString());
-                },
-                enumerable: true,
-                configurable: true
-            });
-            SVGDrawable.prototype._createElements = function () { };
-            /**...........................................................................
-             * _addEventListeners
-             * ...........................................................................
-             * Adds the relevant event listeners for the SVG object
-             * ...........................................................................
-             */
-            SVGDrawable.prototype._addEventListeners = function () {
-                var _this = this;
-                // Add the wheel listener to the SVG element
-                this.base.addEventListener("wheel", function (e) {
-                    var delta = e.deltaY;
-                    delta = (delta > 0) ? 1 : -1;
-                    _this._onZoom(delta);
-                });
-                // Add the drag listeners
-                KIP.makeDraggable(this.base, document.body, true, null, null, null, function (delta) {
-                    _this._onPan(delta);
-                });
+            PathElement.prototype._setAttributes = function (attributes, points) {
+                this._points = points || [];
+                return attributes;
             };
-            /**...........................................................................
-             * _onZoom
-             * ...........................................................................
-             * handle zooming in & out
-             * @param	direction	If positive, zooms in. If negative, zooms out
-             * ...........................................................................
-             */
-            SVGDrawable.prototype._onZoom = function (direction) {
-                var xAmt = this._options.zoom_x * direction;
-                var yAmt = this._options.zoom_y * direction;
-                var xUnit = this._view.w * xAmt;
-                var yUnit = this._view.h * yAmt;
-                // Resize appropriately in the x-dimension
-                if (this._options.zoom_x) {
-                    this._view.x -= xUnit;
-                    this._view.w += (2 * xUnit);
+            PathElement.prototype._createElements = function () {
+                var path = this._startPath(this._attributes);
+                var firstPt = true;
+                var points = this._points;
+                for (var _i = 0, points_3 = points; _i < points_3.length; _i++) {
+                    var pathPt = points_3[_i];
+                    if (firstPt) {
+                        this.moveTo(pathPt);
+                        firstPt = false;
+                    }
+                    else if (_isCurvePoint(pathPt)) {
+                        this.curveTo(pathPt);
+                    }
+                    else if (_isArcPoint(pathPt)) {
+                        this.arcTo(pathPt);
+                    }
+                    else {
+                        this.lineTo(pathPt);
+                    }
                 }
-                // Resive appropriately in the y-dimension
-                if (this._options.zoom_y) {
-                    this._view.y -= yUnit;
-                    this._view.h += (2 * yUnit);
-                }
-                // refresh the viewbox attribute
-                this.generateViewboxAttribute(true);
-            };
-            /**...........................................................................
-             * _onPan
-             * ...........................................................................
-             * handle panning the SVG canvas
-             * @param	delta	The amount to pan by
-             * ...........................................................................
-             */
-            SVGDrawable.prototype._onPan = function (delta) {
-                if (this._options.pan_x) {
-                    this._view.x += delta.x;
-                }
-                if (this._options.pan_y) {
-                    this._view.y += delta.y;
-                }
-                // Update the view box
-                this.generateViewboxAttribute(true);
-            };
-            /**...........................................................................
-             * generateViewboxAttribute
-             * ...........................................................................
-             * Create a string that can be used in the viewbox attribute for the SVG
-             * @param  	set		True if we should also set the attribute after generating it
-             * @returns The viewbox attribute for the current view
-             * ...........................................................................
-             */
-            SVGDrawable.prototype.generateViewboxAttribute = function (set) {
-                var v_box = "";
-                // Make sure we have no negative widths or heights
-                if (this._view.w < 0) {
-                    this._view.w = 1;
-                }
-                if (this._view.h < 0) {
-                    this._view.h = 1;
-                }
-                // Generate the view box string
-                v_box = this._view.x + " " + this._view.y + " " + this._view.w + " " + this._view.h;
-                // Set the attribute if requested
-                if (set) {
-                    this.base.setAttribute("viewbox", v_box);
-                }
-                // Return the viewbox value
-                return v_box;
-            };
-            /**...........................................................................
-             * _calculateView
-             * ...........................................................................
-             * Calculate what the view of the SVG should be, based on the extrema
-             * @returns True if the extrema were appropriately calculated
-             * ...........................................................................
-             */
-            SVGDrawable.prototype._calculateView = function () {
-                // If we shouldn't auto-resize,
-                if (!this._options.auto_resize) {
-                    return false;
-                }
-                // Update to the extrema
-                this._view.x = this._extrema.min.x;
-                this._view.y = this._extrema.min.y;
-                this._view.w = (this._extrema.max.x - this._extrema.min.x);
-                this._view.h = (this._extrema.max.y - this._extrema.min.y);
-                // Return that we successfully updated the view
-                return true;
-            };
-            /**...........................................................................
-             * _updateExtrema
-             * ...........................................................................
-             * Updates the extreme points of this SVG element after adding an element
-             * @param 	extrema 	The extrema of the element just added
-             * ...........................................................................
-             */
-            SVGDrawable.prototype._updateExtrema = function (extrema) {
-                // Update the minima if appropriate
-                if (extrema.min.x < this._extrema.min.x) {
-                    this._extrema.min.x = extrema.min.x;
-                }
-                if (extrema.min.y < this._extrema.min.y) {
-                    this._extrema.min.y = extrema.min.y;
-                }
-                // Update the maxima is appropriate
-                if (extrema.max.x > this._extrema.max.x) {
-                    this._extrema.max.x = extrema.max.x;
-                }
-                if (extrema.max.y > this._extrema.max.y) {
-                    this._extrema.max.y = extrema.max.y;
-                }
-            };
-            //#region CONVERSIONS
-            /**...........................................................................
-             * calculateSVGCoordinates
-             * ...........................................................................
-             * Calculates the SVG coordinates from real coordinates
-             * @param   pt	The real coordinates to convert
-             * @returns The SVG coordinates for this real point
-             * ...........................................................................
-             */
-            SVGDrawable.prototype.calculateSVGCoordinates = function (pt) {
-                return this._convertCoordinates(pt, this._view, this._bounds);
-            };
-            /**...........................................................................
-             * calculateScreenCoordinates
-             * ...........................................................................
-             * Calculate the real coordinates from SVG coordinates
-             * @param 	pt 	The point to convert to real coordinates
-             * @returns	The real coordinates for this SVG point
-             * ...........................................................................
-             */
-            SVGDrawable.prototype.calculateScreenCoordinates = function (pt) {
-                return this._convertCoordinates(pt, this._bounds, this._view);
-            };
-            /**...........................................................................
-             * _convertCoordinates
-             * ...........................................................................
-             *
-             * ...........................................................................
-             */
-            SVGDrawable.prototype._convertCoordinates = function (pt, numerator, denominator) {
-                var out;
-                var x_ratio = (numerator.w / denominator.w);
-                var y_ratio = (numerator.h / denominator.h);
-                out = {
-                    x: (x_ratio * (pt.x - denominator.x)) + numerator.x,
-                    y: (y_ratio * (pt.y - denominator.y)) + numerator.y
-                };
-                return out;
-            };
-            SVGDrawable.prototype._convertDistance = function (measure, numerator, denominator) {
-                var ratio = numerator / denominator;
-                return (measure * ratio);
-            };
-            SVGDrawable.prototype.calculateSVGWidth = function (width) {
-                return this._convertDistance(width, this._view.w, this._bounds.w);
-            };
-            SVGDrawable.prototype.calculateSVGHeight = function (height) {
-                return this._convertDistance(height, this._view.h, this._bounds.h);
-            };
-            SVGDrawable.prototype.calculateScreenWidth = function (width) {
-                return this._convertDistance(width, this._bounds.w, this._view.w);
-            };
-            SVGDrawable.prototype.calculateScreenHeight = function (height) {
-                return this._convertDistance(height, this._bounds.h, this._view.h);
-            };
-            //#endregion
-            //#region ADD CHILDREN
-            /**...........................................................................
-             * _addChild
-             * ...........................................................................
-             * @param 	type
-             * @param 	attributes
-             * @param 	parentGroup
-             * @returns	The created SVG element
-             * ...........................................................................
-             */
-            SVGDrawable.prototype._addChild = function (type, attributes, parentGroup) {
-                // Throw an error if no data was provided
-                if (type === "") {
-                    throw new Error("no SVG element type provided");
-                }
-                var elem = KIP.createSVGElem(type, attributes);
-                // Add to the appropriate parent
-                if (parentGroup) {
-                    parentGroup.appendChild(elem);
+                if (!this._attributes.noFinish) {
+                    this.closePath();
                 }
                 else {
-                    this.base.appendChild(elem);
+                    this.finishPathWithoutClosing();
                 }
-                // Add to our collections
-                if (attributes.unscalable) {
-                    this._nonScaled.push(elem);
-                }
-                if (attributes["id"]) {
-                    this._svgElems.addElement(attributes["id"], elem);
-                }
-                return elem;
             };
-            //#region ADD PATH
+            //#region HANDLE EXTREMA
+            PathElement.prototype._updateExtrema = function () {
+                this._extrema = {
+                    max: null,
+                    min: null
+                };
+                for (var _i = 0, _a = this._points; _i < _a.length; _i++) {
+                    var pathPt = _a[_i];
+                    this._updateExtremaFromPoint(pathPt);
+                }
+            };
+            PathElement.prototype._updateExtremaFromPoint = function (pt) {
+                // handle the base case
+                if (!this._extrema.max || !this._extrema.min) {
+                    this._extrema.max = pt;
+                    this._extrema.min = pt;
+                    return;
+                }
+                // if we're more extreme than the extrema, update
+                if (pt.x < this._extrema.min.x) {
+                    this._extrema.min.x = pt.x;
+                }
+                if (pt.y < this._extrema.min.y) {
+                    this._extrema.min.y = pt.y;
+                }
+                if (pt.x > this._extrema.max.x) {
+                    this._extrema.max.x = pt.x;
+                }
+                if (pt.y > this._extrema.max.y) {
+                    this._extrema.max.y = pt.y;
+                }
+            };
+            //#endregion
             /**...........................................................................
              * _checkForCurrentPath
              * ...........................................................................
              *
              * ...........................................................................
              */
-            SVGDrawable.prototype._checkForCurrentPath = function () {
-                if (!this._currentPath) {
+            PathElement.prototype._checkForCurrentPath = function () {
+                if (!this._elems.base) {
                     throw new Error("no path started");
                 }
             };
@@ -17661,183 +18538,128 @@ var KIP;
              * @returns	The appropriate path string
              * ...........................................................................
              */
-            SVGDrawable.prototype._constructPathAttribute = function (prefix, point) {
+            PathElement.prototype._constructPathAttribute = function (prefix, point) {
                 var out = "";
                 out = prefix + this._pointToAttributeString(point) + "\n";
                 return out;
             };
-            SVGDrawable.prototype._pointToAttributeString = function (point) {
+            PathElement.prototype._pointToAttributeString = function (point) {
                 var out = point.x + " " + point.y;
                 return out;
             };
-            SVGDrawable.prototype._addToPathAttribute = function (suffix) {
+            PathElement.prototype._addToPathAttribute = function (suffix) {
                 this._checkForCurrentPath();
-                var d = this._currentPath.getAttribute("d");
+                var d = this._elems.base.getAttribute("d");
                 d += suffix;
-                this._currentPath.setAttribute("d", d);
+                this._elems.base.setAttribute("d", d);
                 return true;
             };
-            SVGDrawable.prototype.startPath = function (attr, parentGroup) {
-                this._currentPath = this._addChild("path", attr, parentGroup);
-                return this._currentPath;
+            PathElement.prototype._startPath = function (attr) {
+                _super.prototype._createElements.call(this, this._attributes);
+                return this._elems.base;
             };
-            SVGDrawable.prototype.lineTo = function (point) {
+            PathElement.prototype.lineTo = function (point) {
                 this._checkForCurrentPath();
                 this._addToPathAttribute(this._constructPathAttribute("L", point));
             };
-            SVGDrawable.prototype.moveTo = function (point) {
+            PathElement.prototype.moveTo = function (point) {
                 this._checkForCurrentPath();
                 this._addToPathAttribute(this._constructPathAttribute("M", point));
             };
-            SVGDrawable.prototype.curveTo = function (destination, control1, control2) {
+            PathElement.prototype.curveTo = function (point) {
                 this._checkForCurrentPath();
                 var d;
-                d = "C" + this._pointToAttributeString(control1) + ", ";
-                d += this._pointToAttributeString(control2) + ", ";
-                d += this._pointToAttributeString(destination) + "\n";
+                d = "C" + this._pointToAttributeString(point.controls[0]) + ", ";
+                d += this._pointToAttributeString(point.controls[1]) + ", ";
+                d += this._pointToAttributeString(point) + "\n";
                 this._addToPathAttribute(d);
             };
-            SVGDrawable.prototype.arcTo = function (destination, radius, xRotation, largeArc, sweepFlag) {
+            PathElement.prototype.arcTo = function (point) {
                 var d;
-                d = "A" + this._pointToAttributeString(radius) + " ";
-                d += xRotation + " " + largeArc + " " + sweepFlag + " ";
-                d += this._pointToAttributeString(destination) + "\n";
+                d = "A" + this._pointToAttributeString(point.radius) + " ";
+                d += point.xRotation + " " + point.largeArc + " " + point.sweepFlag + " ";
+                d += this._pointToAttributeString(point) + "\n";
                 this._addToPathAttribute(d);
             };
             /** closes the path so it creates an enclosed space */
-            SVGDrawable.prototype.closePath = function () {
-                this._checkForCurrentPath();
+            PathElement.prototype.closePath = function () {
                 this._addToPathAttribute(" Z");
                 this.finishPathWithoutClosing();
             };
             /** indicates the path is finished without closing the path */
-            SVGDrawable.prototype.finishPathWithoutClosing = function () {
-                delete this._currentPath;
+            PathElement.prototype.finishPathWithoutClosing = function () {
             };
-            /**
-             * Adds a path to the SVG canvas
-             * @param   {IPathPoint[]} points   The points to add to the path
-             * @param   {IAttributes}  attr     Any attributes that should be applied
-             * @param   {SVGElement}   group    The group this path should be added to
-             * @param   {boolean}      noFinish True if we should finish the path without closing
-             * @returns {SVGElement}            The path that was created
-             */
-            SVGDrawable.prototype.addPath = function (points, attr, group, noFinish) {
-                if (!attr) {
-                    attr = {};
-                }
-                var path = this.startPath(attr, group);
-                var firstPt = true;
-                for (var _i = 0, points_2 = points; _i < points_2.length; _i++) {
-                    var pathPt = points_2[_i];
-                    if (firstPt) {
-                        this.moveTo(pathPt.point);
-                        firstPt = false;
-                    }
-                    else if (pathPt.controls) {
-                        this.curveTo(pathPt.point, pathPt.controls[0], pathPt.controls[1]);
-                    }
-                    else if (pathPt.radius) {
-                        this.arcTo(pathPt.point, pathPt.radius, pathPt.xRotation, pathPt.largeArc, pathPt.sweepFlag);
-                    }
-                    else {
-                        this.lineTo(pathPt.point);
-                    }
-                    if (this._options.auto_resize) {
-                        this._updateExtrema({ max: pathPt.point, min: pathPt.point });
-                    }
-                }
-                if (!noFinish) {
-                    this.closePath();
-                }
-                else {
-                    this.finishPathWithoutClosing();
-                }
-                return path;
-            };
-            //#endregion
             /**...........................................................................
-             * addRectangle
+             * _calculatePolygonPoint
              * ...........................................................................
-             * @param x
-             * @param y
-             * @param width
-             * @param height
-             * @param attr
-             * @param group
+             * helper function to calculate a polygon's point at a certain angle
              * ...........................................................................
              */
-            SVGDrawable.prototype.addRectangle = function (x, y, width, height, attr, group) {
-                var rect;
-                rect = {
-                    x: x,
-                    y: y,
-                    w: width,
-                    h: height
+            PathElement.prototype._calculatePolygonPoint = function (centerPt, currentAngle, radius) {
+                var out = {
+                    x: centerPt.x + KIP.roundToPlace(Math.sin(currentAngle) * radius, 10),
+                    y: centerPt.y + KIP.roundToPlace(-1 * Math.cos(currentAngle) * radius, 10)
                 };
-                return this._addRectangleHelper(rect, attr, group);
+                return out;
             };
-            /**...........................................................................
-             * _addRectangleHelper
-             * ...........................................................................
-             * @param points
-             * @param attr
-             * @param group
-             * ...........................................................................
-             */
-            SVGDrawable.prototype._addRectangleHelper = function (points, attr, group) {
-                this._checkBasicRectForBadData(points);
-                if (!attr) {
-                    attr = {};
+            return PathElement;
+        }(SVG.SVGElem));
+        SVG.PathElement = PathElement;
+    })(SVG = KIP.SVG || (KIP.SVG = {}));
+})(KIP || (KIP = {}));
+///<reference path="svgElement.ts" />
+///<reference path="pathElement.ts" />
+var KIP;
+(function (KIP) {
+    var SVG;
+    (function (SVG) {
+        /**...........................................................................
+         * @class	PathExtensionElement
+         * ...........................................................................
+         * @version 1.0
+         * @author	Kip Price
+         * ...........................................................................
+         */
+        var PathExtensionElement = /** @class */ (function (_super) {
+            __extends(PathExtensionElement, _super);
+            function PathExtensionElement() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            PathExtensionElement.prototype._setAttributes = function (attr) {
+                var addlArgs = [];
+                for (var _i = 1; _i < arguments.length; _i++) {
+                    addlArgs[_i - 1] = arguments[_i];
                 }
-                attr["x"] = points.x;
-                attr["y"] = points.y;
-                attr["width"] = points.w;
-                attr["height"] = points.h;
-                var elem = this._addChild("rect", attr, group);
-                if (this._options.auto_resize) {
-                    this._updateExtrema(this._basicRectToExtrema(points));
-                }
-                return elem;
+                this._points = this._generatePoints.apply(this, addlArgs);
+                return attr;
             };
-            //#endregion
-            //#region ADD CIRCLE
-            /**...........................................................................
-             * addCircle
-             * ...........................................................................
-             * adds a circle to the SVG canvas
-             * @param	centerPt
-             * @param	radius
-             * @param	attr
-             * @param	group
-             * @returns	The created circle
-             * ...........................................................................
-             */
-            SVGDrawable.prototype.addCircle = function (centerPt, radius, attr, group) {
-                if (!attr) {
-                    attr = {};
-                }
-                // Set our appropriate attribute
-                attr["cx"] = centerPt.x;
-                attr["cy"] = centerPt.y;
-                attr["r"] = radius;
-                var elem = this._addChild("circle", attr, group);
-                // Auto-resize if appropriate
-                if (this._options.auto_resize) {
-                    this._updateExtrema(this._extremaFromCenterPointAndRadius(centerPt, radius));
-                }
-                // Add the child
-                return elem;
+            return PathExtensionElement;
+        }(SVG.PathElement));
+        SVG.PathExtensionElement = PathExtensionElement;
+        /**...........................................................................
+         * @class	ArcElement
+         * ...........................................................................
+         * @version	1.0
+         * @author	Kip Price
+         * ...........................................................................
+         */
+        var ArcElement = /** @class */ (function (_super) {
+            __extends(ArcElement, _super);
+            function ArcElement() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            ArcElement.prototype._generatePoints = function (attr) {
+                return [];
             };
-            //#endregion
             //#region ADD ARC
             /**...........................................................................
              * addPerfectArc
              * ...........................................................................
              * Adds a perfect arc to the SVG canvas
+             * //TODO: make real
              * ...........................................................................
              */
-            SVGDrawable.prototype.addPerfectArc = function (centerPt, radius, startDegree, endDegree, direction, noRadii, attr, group) {
+            ArcElement.prototype.addPerfectArc = function (centerPt, radius, startDegree, endDegree, direction, noRadii, attr, group) {
                 var padding = 0; //TODO
                 var angleDiff = (endDegree - startDegree);
                 var adjust = this._style.strokeWidth * Math.sqrt(2);
@@ -17850,14 +18672,22 @@ var KIP;
                 if (!attr) {
                     attr = {};
                 }
-                var path = this.startPath(attr, group);
+                var path = this._startPath(attr);
                 this.moveTo(start);
-                this.arcTo(end, { x: radius, y: radius }, 0, (angleDiff > 180) ? 1 : 0, direction);
-                // auto-resize if appropriate
-                if (this._options.auto_resize) {
-                    var extrema = this._arcToExtrema(start, end, centerPt, radius, startDegree, endDegree);
-                    this._updateExtrema(extrema);
-                }
+                this.arcTo({
+                    x: end.x,
+                    y: end.y,
+                    largeArc: (angleDiff > 180) ? 1 : 0,
+                    radius: { x: radius, y: radius },
+                    sweepFlag: direction,
+                    xRotation: 0,
+                });
+                //TODO: doublecheck
+                // // auto-resize if appropriate
+                // if (this._options.auto_resize) {
+                // 	let extrema: IExtrema = this._arcToExtrema(start, end, centerPt, radius, startDegree, endDegree);
+                // 	this._updateExtrema(extrema);
+                // }
                 // If we aren't showing the radius, quit now
                 if (noRadii) {
                     this.finishPathWithoutClosing();
@@ -17868,452 +18698,13 @@ var KIP;
                 this.closePath();
                 return path;
             };
-            //#endregion
-            //#region ADD POLYGON
-            /**...........................................................................
-             * regularPolygon
-             * ...........................................................................
-             * creates a regular polygon to the SVG canvas
-             * @param   centerPt The central point of the polygon
-             * @param   sides    The number of sides of the polygon
-             * @param   radius   The radius of the polygon
-             * @param   attr     Any additional attributes
-             * @param   group    The group the polygon should be added to
-             * @returns The created polygon on the SVG Canvas
-             * ...........................................................................
-             */
-            SVGDrawable.prototype.regularPolygon = function (centerPt, sides, radius, attr, group) {
-                // Generate the point list for the polygon
-                var points;
-                var curAngle = 0;
-                var intAngle = KIP.Trig.calculatePolygonInternalAngle(sides);
-                for (var i = 0; i < sides; i += 1) {
-                    var pt = this._calculatePolygonPoint(centerPt, curAngle, radius);
-                    curAngle += intAngle;
-                    points += pt.x + "," + pt.y + " ";
-                }
-                // Set our attributes to include the points
-                if (!attr) {
-                    attr = {};
-                }
-                attr["points"] = points;
-                var elem = this._addChild("polygon", attr, group);
-                // Auto-resize if appropriate
-                if (this._options.auto_resize) {
-                    this._updateExtrema(this._extremaFromCenterPointAndRadius(centerPt, radius));
-                }
-                return elem;
-            };
-            //#endregion
-            //#region ADD STAR
-            /**...........................................................................
-             * addRegularStar
-             * ...........................................................................
-             * Creates a regular star on the SVG canvas
-             * @param   centerPt      	The point at the center of the star
-             * @param   numberOfPoints 	The number of points of this star
-             * @param   radius        	[description]
-             * @param   innerRadius   	[description]
-             * @param   attr          	[description]
-             * @param   group         	[description]
-             * @returns The created star
-             * ...........................................................................
-             */
-            SVGDrawable.prototype.addRegularStar = function (centerPt, numberOfPoints, radius, innerRadius, attr, group) {
-                var curAngle = 0;
-                var intAngle = (KIP.Trig.calculatePolygonInternalAngle(numberOfPoints) / 2);
-                var points = "";
-                for (var i = 0; i < numberOfPoints; i += 1) {
-                    var pt = void 0;
-                    // Outer point
-                    pt = this._calculatePolygonPoint(centerPt, curAngle, radius);
-                    curAngle += intAngle;
-                    points += pt.x + "," + pt.y + " ";
-                    // Inner point
-                    pt = this._calculatePolygonPoint(centerPt, curAngle, innerRadius);
-                    curAngle += intAngle;
-                    points += pt.x + "," + pt.y + " ";
-                }
-                // Set the points value into our attributes
-                if (!attr) {
-                    attr = {};
-                }
-                attr["points"] = points;
-                var elem = this._addChild("polygon", attr, group);
-                // Auto-resize if appropriate
-                if (this._options.auto_resize) {
-                    this._updateExtrema(this._extremaFromCenterPointAndRadius(centerPt, radius));
-                }
-                return elem;
-            };
-            //#endregion
-            //#region ADD TEXT
-            /**...........................................................................
-             * addtext
-             * ...........................................................................
-             * Adds a text element to the SVG canvas
-             * @param   text     The text to add
-             * @param   point    The point at which to add the point
-             * @param   originPt If provided, the origin point within the text element that defines where the text is drawn
-             * @param   attr     Any attributes that should be applied to the element
-             * @param   group    The group to add this element to
-             * @returns The text element added to the SVG
-             * ...........................................................................
-             */
-            SVGDrawable.prototype.addText = function (text, point, originPt, attr, group) {
-                if (!attr) {
-                    attr = {};
-                }
-                attr["x"] = point.x;
-                attr["y"] = point.y;
-                var textElem = this._addChild("text", attr, group);
-                textElem.innerHTML = text;
-                var box;
-                if (originPt) {
-                    box = this.measureElement(textElem);
-                    var newPt = {
-                        x: box.w * originPt.x,
-                        y: (box.h * originPt.y) - box.h
-                    };
-                    textElem.setAttribute("x", newPt.x.toString());
-                    textElem.setAttribute("y", newPt.y.toString());
-                    box.x = newPt.x;
-                    box.y = newPt.y;
-                }
-                if (this._options.auto_resize) {
-                    if (!box) {
-                        this.measureElement(textElem);
-                    }
-                    this._updateExtrema({ min: { x: box.x, y: box.y }, max: { x: box.x + box.w, y: box.y + box.h } });
-                }
-                // Make sure we add the unselectable class
-                KIP.addClass(textElem, "unselectable");
-                return textElem;
-            };
-            SVGDrawable.prototype.addFlowableText = function (text, bounds, attr, group) {
-                //TODO: Add flowable text
-                return null;
-            };
-            //#endregion
-            //#region ADD GROUP
-            /**...........................................................................
-             * addGroup
-             * ...........................................................................
-             * @param	attr
-             * @param 	group
-             * @returns	The created element
-             * ...........................................................................
-             */
-            SVGDrawable.prototype.addGroup = function (attr, group) {
-                return this._addChild("g", attr, group);
-            };
-            //#endregion
-            //#region ADD GRADIENTS
-            /**...........................................................................
-             * addGradient
-             * ...........................................................................
-             * Adds a gradient to the SVG canvas
-             * @param   type       The type of gradient to add
-             * @param   points     What points describe the gradient
-             * @param   transforms 	 ???
-             * @returns he created gradient
-             * ...........................................................................
-             */
-            SVGDrawable.prototype.addGradient = function (type, points, transforms) {
-                var id = "gradient" + this.__gradients.length;
-                var attr = {
-                    id: id
-                };
-                var gradient;
-                gradient = KIP.createSVGElem(SVGGradientTypeEnum[type] + "Gradient", attr);
-                // Apply the points
-                for (var _i = 0, points_3 = points; _i < points_3.length; _i++) {
-                    var point = points_3[_i];
-                    var ptElem = KIP.createSVGElem("stop");
-                    ptElem.style.stopColor = point.color;
-                    ptElem.style.stopOpacity = point.opacity.toString();
-                    ptElem.setAttribute("offset", point.offset);
-                    gradient.appendChild(ptElem);
-                }
-                // Add to our element & our collection
-                this._definitionsElement.appendChild(gradient);
-                this.__gradients.push(gradient);
-                // Add transform points (BROKEN?)
-                if (transforms) {
-                    var tID = "gradient" + this.__gradients.length;
-                    var tGrad = KIP.createSVGElem(type + "Gradient", { id: tID });
-                    tGrad.setAttribute("x1", transforms.start.x.toString());
-                    tGrad.setAttribute("x2", transforms.end.x.toString());
-                    tGrad.setAttribute("y1", transforms.start.y.toString());
-                    tGrad.setAttribute("y2", transforms.end.y.toString());
-                    tGrad.setAttribute("xlink:href", "#" + id);
-                    this._definitionsElement.appendChild(tGrad);
-                    this.__gradients.push(tGrad);
-                    id = tID;
-                }
-                return id;
-            };
-            //#endregion
-            //#region ADD PATTERNS
-            // TODO: add pattern
-            // public addPattern () {
-            // }
-            // TODO: add stipple pattern
-            //public addStipplePattern () {
-            //}
-            //#endregion
-            //#region ADD SHAPES
-            /**
-             * Adds a particular shape to the SVG canvas
-             * @param   shapeType The type of shape to add
-             * @param   scale     What scale the shape should be drawn at
-             * @param   attr      Any attributes that should be applied to the element
-             * @param   group     What group the element should be added to
-             * @returns The created shape
-             */
-            SVGDrawable.prototype.addShape = function (shapeType, scale, attr, group) {
-                // Use our default scale if one wasn't passed in
-                if (!scale) {
-                    scale = 1;
-                }
-                // Draw the appropriate shape
-                switch (shapeType) {
-                    case SVGShapeEnum.CHECKMARK:
-                        return this._addCheckShape(scale, attr, group);
-                    case SVGShapeEnum.X:
-                        return this._addExShape(scale, attr, group);
-                    case SVGShapeEnum.PLUS:
-                        return this._addPlusShape(scale, attr, group);
-                }
-            };
-            /**
-             * Adds a checkmark to the canvas with the provided scale
-             */
-            SVGDrawable.prototype._addCheckShape = function (scale, attr, group) {
-                scale *= (1 / 4);
-                var basePoints = [
-                    { x: -0.15, y: 2.95 },
-                    { x: 1, y: 4 },
-                    { x: 1.25, y: 4 },
-                    { x: 3, y: 0.25 },
-                    { x: 2.4, y: 0 },
-                    { x: 1, y: 3 },
-                    { x: 0.3, y: 2.3 }
-                ];
-                var points = this._convertPointsToPathPoints(basePoints, scale);
-                return this.addPath(points, attr, group);
-            };
-            /**
-             * Adds an 'ex' to the canvas with the provided scale
-             */
-            SVGDrawable.prototype._addExShape = function (scale, attr, group) {
-                scale *= (1 / 3.75);
-                var basePoints = [
-                    { x: 0.25, y: 0.6 },
-                    { x: 1, y: 0 },
-                    { x: 2, y: 1.1 },
-                    { x: 3, y: 0 },
-                    { x: 3.75, y: 0.6 },
-                    { x: 2.66, y: 1.75 },
-                    { x: 3.75, y: 2.9 },
-                    { x: 3, y: 3.5 },
-                    { x: 2, y: 2.5 },
-                    { x: 1, y: 3.5 },
-                    { x: 0.25, y: 2.9 },
-                    { x: 1.33, y: 1.75 }
-                ];
-                var points = this._convertPointsToPathPoints(basePoints, scale);
-                return this.addPath(points, attr, group);
-            };
-            /**
-             * Adds a plus to the canvas with the provided scale
-             */
-            SVGDrawable.prototype._addPlusShape = function (scale, attr, group) {
-                scale *= (1 / 5);
-                var basePoints = [
-                    { x: 2, y: 2 },
-                    { x: 2, y: 0 },
-                    { x: 3, y: 0 },
-                    { x: 3, y: 2 },
-                    { x: 5, y: 2 },
-                    { x: 5, y: 3 },
-                    { x: 3, y: 3 },
-                    { x: 3, y: 5 },
-                    { x: 2, y: 5 },
-                    { x: 2, y: 3 },
-                    { x: 0, y: 3 },
-                    { x: 0, y: 2 }
-                ];
-                var points = this._convertPointsToPathPoints(basePoints, scale);
-                return this.addPath(points, attr, group);
-            };
-            //#endregion
-            /**...........................................................................
-             * _convertPointsToPathPoints
-             * ...........................................................................
-             * Helper function to turn an array of IPoint elements to IPathPoint elements
-             * @param   points 	The points to convert
-             * @param   scale  	The scale that should be applied to the IPoint before turning into a IPathPoint
-             * @returns Array of scaled IPathPoints
-             * ...........................................................................
-             */
-            SVGDrawable.prototype._convertPointsToPathPoints = function (points, scale) {
-                if (!scale) {
-                    scale = 1;
-                }
-                var pathPoints = [];
-                // Loop through each of the points
-                for (var _i = 0, points_4 = points; _i < points_4.length; _i++) {
-                    var pt = points_4[_i];
-                    pt.x *= scale; // Scale the x dimension
-                    pt.y *= scale; // Scale the y dimension
-                    pathPoints.push({
-                        point: pt
-                    });
-                }
-                return pathPoints;
-            };
-            SVGDrawable.prototype.assignStyle = function (element) {
-                this._style.assignStyle(element);
-            };
-            //
-            /**...........................................................................
-             * rotateElement
-             * ...........................................................................
-             * Rotates an element around a particular point
-             * @param   elem         The element to rotate
-             * @param   degree       How many degrees to rotate the element
-             * @param   rotateAround What point to rotate around
-             * @returns The rotated SVG Element
-             * ...........................................................................
-             */
-            SVGDrawable.prototype.rotateElement = function (elem, degree, rotateAround) {
-                var box;
-                // If we don't have a point around which to rotate, set it to be the center of the element
-                if (!rotateAround) {
-                    box = this.measureElement(elem);
-                    rotateAround = {
-                        x: box.x + (box.w / 2),
-                        y: box.y + (box.h / 2)
-                    };
-                }
-                elem.setAttribute("transform", "rotate(" + degree + ", " + rotateAround.x + ", " + rotateAround.y + ")");
-                return elem;
-            };
-            //TODO: add SVG ANIMATIONS
-            SVGDrawable.prototype.animateElement = function () { };
-            /**...........................................................................
-             * measureElement
-             * ...........................................................................
-             * Measures an element in the SVG canvas
-             * @param   element 	The element to measure
-             * @returns The dimensions of the element, in SVG coordinates
-             * ...........................................................................
-             */
-            SVGDrawable.prototype.measureElement = function (element) {
-                var box;
-                var addedParent;
-                // Add our base element to the view if it doesn't have anything
-                if (!this.base.parentNode) {
-                    document.body.appendChild(this.base);
-                    addedParent = true;
-                }
-                // Get the bounding box for element
-                box = element.getBBox();
-                // If we had to add the base element to the document, remove it
-                if (addedParent) {
-                    document.body.removeChild(this.base);
-                }
-                // Build our return rectangle
-                var rect = {
-                    x: box.x,
-                    y: box.y,
-                    w: box.width,
-                    h: box.height
-                };
-                return rect;
-            };
-            /**...........................................................................
-             * _checkBasicRectForBadData
-             * ...........................................................................
-             * helper function to check that a rectangle is actually renderable
-             * @param	rect	Determine if a rectangle is renderable
-             * ...........................................................................
-             */
-            SVGDrawable.prototype._checkBasicRectForBadData = function (rect) {
-                var err = false;
-                // check for null values first
-                if (rect.x !== 0 && !rect.x) {
-                    err = true;
-                }
-                if (rect.y !== 0 && !rect.y) {
-                    err = true;
-                }
-                if (rect.w !== 0 && !rect.w) {
-                    err = true;
-                }
-                if (rect.h !== 0 && !rect.h) {
-                    err = true;
-                }
-                // Then for non-sensical
-                if (rect.w < 0) {
-                    err = true;
-                }
-                if (rect.h < 0) {
-                    err = true;
-                }
-                if (err) {
-                    throw new Error("invalid basic rectangle values");
-                }
-            };
-            /**...........................................................................
-             * _basicRectToExtrema
-             * ...........................................................................
-             * helper function to turn a basic rect to extrema
-             * @param	rect	Rect to convert
-             * @returns	The extrema that correspond with the rect
-             * ...........................................................................
-             */
-            SVGDrawable.prototype._basicRectToExtrema = function (rect) {
-                var extrema = {
-                    min: { x: rect.x, y: rect.y },
-                    max: { x: rect.x + rect.w, y: rect.y + rect.h }
-                };
-                return extrema;
-            };
-            /**...........................................................................
-             * _extremaFromCenterPointAndRadius
-             * ...........................................................................
-             * helper function to calculate extrema from a central point and radius
-             * ...........................................................................
-             */
-            SVGDrawable.prototype._extremaFromCenterPointAndRadius = function (center, radius) {
-                var extrema = {
-                    max: { x: center.x + radius, y: center.y + radius },
-                    min: { x: center.x - radius, y: center.y - radius }
-                };
-                return extrema;
-            };
-            /**...........................................................................
-             * _calculatePolygonPoint
-             * ...........................................................................
-             * helper function to calculate a polygon's point at a certain angle
-             * ...........................................................................
-             */
-            SVGDrawable.prototype._calculatePolygonPoint = function (centerPt, currentAngle, radius) {
-                var out = {
-                    x: centerPt.x + KIP.roundToPlace(Math.sin(currentAngle) * radius, 10),
-                    y: centerPt.y + KIP.roundToPlace(-1 * Math.cos(currentAngle) * radius, 10)
-                };
-                return out;
-            };
             /**...........................................................................
              * _arcToExtrema
              * ...........................................................................
              * helper function to convert arc params to extrema
              * ...........................................................................
              */
-            SVGDrawable.prototype._arcToExtrema = function (startPt, endPt, centerPt, radius, startDeg, endDeg) {
+            ArcElement.prototype._arcToExtrema = function (startPt, endPt, centerPt, radius, startDeg, endDeg) {
                 var extrema = {
                     max: {
                         x: Math.max(startPt.x, endPt.x),
@@ -18354,124 +18745,462 @@ var KIP;
                 }
                 return extrema;
             };
-            return SVGDrawable;
-        }(KIP.Drawable));
-        SVG.SVGDrawable = SVGDrawable;
+            return ArcElement;
+        }(PathExtensionElement));
+        SVG.ArcElement = ArcElement;
+        /**...........................................................................
+         * @class	PolygonElement
+         * ...........................................................................
+         * @version	1.0
+         * @author	Kip Price
+         * ...........................................................................
+         */
+        var PolygonElement = /** @class */ (function (_super) {
+            __extends(PolygonElement, _super);
+            function PolygonElement(centerPt, sides, radius, attr, innerRadius) {
+                return _super.call(this, null, attr, centerPt, sides, radius) || this;
+            }
+            PolygonElement.prototype._generatePoints = function (centerPt, sides, radius, innerRadius) {
+                // Generate the point list for the polygon
+                var points = [];
+                var curAngle = 0;
+                var intAngle = KIP.Trig.calculatePolygonInternalAngle(sides);
+                for (var i = 0; i < sides; i += 1) {
+                    var pt = this._calculatePolygonPoint(centerPt, curAngle, radius);
+                    curAngle += intAngle;
+                    points.push(pt);
+                }
+                return points;
+            };
+            return PolygonElement;
+        }(PathExtensionElement));
+        SVG.PolygonElement = PolygonElement;
+        /**...........................................................................
+         * @class	StarElement
+         * ...........................................................................
+         * @version 1.0
+         * @author	Kip Price
+         * ...........................................................................
+         */
+        var StarElement = /** @class */ (function (_super) {
+            __extends(StarElement, _super);
+            function StarElement(centerPt, numberOfPoints, radius, innerRadius, attr) {
+                return _super.call(this, centerPt, numberOfPoints, radius, attr, innerRadius) || this;
+            }
+            StarElement.prototype._generatePoints = function (centerPt, numberOfPoints, radius, innerRadius) {
+                var curAngle = 0;
+                var intAngle = (KIP.Trig.calculatePolygonInternalAngle(numberOfPoints) / 2);
+                var points = [];
+                for (var i = 0; i < numberOfPoints; i += 1) {
+                    var pt = void 0;
+                    // Outer point
+                    pt = this._calculatePolygonPoint(centerPt, curAngle, radius);
+                    curAngle += intAngle;
+                    points.push(pt);
+                    // Inner point
+                    pt = this._calculatePolygonPoint(centerPt, curAngle, innerRadius);
+                    curAngle += intAngle;
+                    points.push(pt);
+                }
+                return points;
+            };
+            return StarElement;
+        }(PolygonElement));
+        SVG.StarElement = StarElement;
+        /**...........................................................................
+         * @class	CheckElement
+         * ...........................................................................
+         */
+        var CheckElement = /** @class */ (function (_super) {
+            __extends(CheckElement, _super);
+            function CheckElement() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            CheckElement.prototype._generatePoints = function () {
+                var pts = [
+                    { x: -0.15, y: 2.95 },
+                    { x: 1, y: 4 },
+                    { x: 1.25, y: 4 },
+                    { x: 3, y: 0.25 },
+                    { x: 2.4, y: 0 },
+                    { x: 1, y: 3 },
+                    { x: 0.3, y: 2.3 }
+                ];
+                return pts;
+            };
+            return CheckElement;
+        }(PathExtensionElement));
+        SVG.CheckElement = CheckElement;
+        /**...........................................................................
+         * @class	ExElement
+         * ...........................................................................
+         */
+        var ExElement = /** @class */ (function (_super) {
+            __extends(ExElement, _super);
+            function ExElement() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            ExElement.prototype._generatePoints = function () {
+                var pts = [
+                    { x: 0.25, y: 0.6 },
+                    { x: 1, y: 0 },
+                    { x: 2, y: 1.1 },
+                    { x: 3, y: 0 },
+                    { x: 3.75, y: 0.6 },
+                    { x: 2.66, y: 1.75 },
+                    { x: 3.75, y: 2.9 },
+                    { x: 3, y: 3.5 },
+                    { x: 2, y: 2.5 },
+                    { x: 1, y: 3.5 },
+                    { x: 0.25, y: 2.9 },
+                    { x: 1.33, y: 1.75 }
+                ];
+                return pts;
+            };
+            return ExElement;
+        }(PathExtensionElement));
+        SVG.ExElement = ExElement;
+        /**...........................................................................
+         * @class	PlusElement
+         * ...........................................................................
+         */
+        var PlusElement = /** @class */ (function (_super) {
+            __extends(PlusElement, _super);
+            function PlusElement() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            PlusElement.prototype._generatePoints = function () {
+                var pts = [
+                    { x: 2, y: 2 },
+                    { x: 2, y: 0 },
+                    { x: 3, y: 0 },
+                    { x: 3, y: 2 },
+                    { x: 5, y: 2 },
+                    { x: 5, y: 3 },
+                    { x: 3, y: 3 },
+                    { x: 3, y: 5 },
+                    { x: 2, y: 5 },
+                    { x: 2, y: 3 },
+                    { x: 0, y: 3 },
+                    { x: 0, y: 2 }
+                ];
+                return pts;
+            };
+            return PlusElement;
+        }(PathExtensionElement));
+        SVG.PlusElement = PlusElement;
     })(SVG = KIP.SVG || (KIP.SVG = {}));
 })(KIP || (KIP = {}));
+///<reference path="svgElement.ts" />
 var KIP;
 (function (KIP) {
     var SVG;
     (function (SVG) {
         /**...........................................................................
-         * @class   SVGElem
+         * @class   CircleElement
          * ...........................................................................
-         * Creates an element on an SVG Drawable
-         * @version 1.1
+         * @version 1.0
          * @author  Kip Price
          * ...........................................................................
          */
-        var SVGElem = /** @class */ (function (_super) {
-            __extends(SVGElem, _super);
-            //#endregion
-            /**...........................................................................
-             * Creates an SVG element
-             * @param   attributes  The attributes to create this element with
-             * ...........................................................................
-             */
-            function SVGElem(attributes) {
-                var _this = _super.call(this) || this;
-                attributes = _this._setAttributes(attributes);
-                _this._createElements(attributes);
-                return _this;
-            }
-            Object.defineProperty(SVGElem.prototype, "style", {
-                get: function () { return this._style; },
-                enumerable: true,
-                configurable: true
-            });
-            Object.defineProperty(SVGElem.prototype, "preventScaling", {
-                get: function () { return this._preventScaling; },
-                enumerable: true,
-                configurable: true
-            });
-            Object.defineProperty(SVGElem.prototype, "extrema", {
-                get: function () { return this._extrema; },
-                enumerable: true,
-                configurable: true
-            });
-            SVGElem.prototype._shouldSkipCreateElements = function () {
-                return true;
-            };
-            /**
-             * _createElements
-             *
-             * Create the elements that make up this SVG Element
-             * @param   attributes  Attributes for this element
-             */
-            SVGElem.prototype._createElements = function (attributes) {
-                if (!attributes) {
-                    throw new Error("no attributes provided for SVG Element");
-                }
-                // determine the type of the SVG element
-                var type = attributes.type;
-                delete attributes.type;
-                // Throw an error if no data was provided
-                if (type === "") {
-                    throw new Error("no SVG element type provided");
-                }
-                var elem = KIP.createSVGElem(type, attributes);
-                this._elems = {};
-                this._elems.base = elem;
-                // Add to the appropriate parent
-                if (attributes.parent) {
-                    attributes.parent.appendChild(elem);
-                    delete attributes.parent;
-                }
-                // track that this element should be non-scaling
-                this._preventScaling = attributes.unscalable;
-            };
-            return SVGElem;
-        }(KIP.Drawable));
-        SVG.SVGElem = SVGElem;
-        var RectangleElement = /** @class */ (function (_super) {
-            __extends(RectangleElement, _super);
-            function RectangleElement(x, y, width, height, attributes) {
-                var _this = this;
-                if (!attributes) {
-                    attributes = {};
-                }
-                attributes.type = "rect";
-                _this = _super.call(this, attributes) || this;
-                return _this;
-            }
-            return RectangleElement;
-        }(SVGElem));
-        SVG.RectangleElement = RectangleElement;
         var CircleElement = /** @class */ (function (_super) {
             __extends(CircleElement, _super);
-            function CircleElement() {
-                return _super !== null && _super.apply(this, arguments) || this;
+            function CircleElement(center, radius, attributes) {
+                return _super.call(this, attributes, center, radius) || this;
             }
+            CircleElement.prototype._setAttributes = function (attributes, center, radius) {
+                attributes.type = "circle";
+                attributes.cx = center.x;
+                attributes.cy = center.y;
+                attributes.r = radius;
+                return attributes;
+            };
+            CircleElement.prototype._updateExtrema = function (attributes) {
+                this._extrema = this._extremaFromCenterPointAndRadius({ x: attributes.cx, y: attributes.cy }, attributes.r);
+            };
+            /**...........................................................................
+             * _extremaFromCenterPointAndRadius
+             * ...........................................................................
+             * helper function to calculate extrema from a central point and radius
+             * ...........................................................................
+             */
+            CircleElement.prototype._extremaFromCenterPointAndRadius = function (center, radius) {
+                var extrema = {
+                    max: { x: center.x + radius, y: center.y + radius },
+                    min: { x: center.x - radius, y: center.y - radius }
+                };
+                return extrema;
+            };
             return CircleElement;
-        }(SVGElem));
+        }(SVG.SVGElem));
         SVG.CircleElement = CircleElement;
-        var PathElement = /** @class */ (function (_super) {
-            __extends(PathElement, _super);
-            function PathElement() {
-                return _super !== null && _super.apply(this, arguments) || this;
+    })(SVG = KIP.SVG || (KIP.SVG = {}));
+})(KIP || (KIP = {}));
+///<reference path="svgElement.ts" />
+var KIP;
+(function (KIP) {
+    var SVG;
+    (function (SVG) {
+        /**...........................................................................
+         * @class SVGGradientTypeEnum
+         * ...........................................................................
+         * Handle different types of gradients
+         * ...........................................................................
+         */
+        var SVGGradientTypeEnum;
+        (function (SVGGradientTypeEnum) {
+            SVGGradientTypeEnum[SVGGradientTypeEnum["Linear"] = 1] = "Linear";
+            SVGGradientTypeEnum[SVGGradientTypeEnum["Radial"] = 2] = "Radial";
+        })(SVGGradientTypeEnum = SVG.SVGGradientTypeEnum || (SVG.SVGGradientTypeEnum = {}));
+        /**...........................................................................
+         * @class	GradientElement
+         * ...........................................................................
+         * @version 1.0
+         * @author	Kip Price
+         * ...........................................................................
+         */
+        var GradientElement = /** @class */ (function (_super) {
+            __extends(GradientElement, _super);
+            /**...........................................................................
+             * @param type
+             * @param points
+             * @param transforms
+             * ...........................................................................
+             */
+            function GradientElement(type, points, transforms) {
+                return _super.call(this, {}, type, points, transforms) || this;
             }
-            return PathElement;
-        }(SVGElem));
-        SVG.PathElement = PathElement;
+            /**...........................................................................
+             * _setAttributes
+             * ...........................................................................
+             * @param attr
+             * @param type
+             * @param points
+             * @param transforms
+             * ...........................................................................
+             */
+            GradientElement.prototype._setAttributes = function (attr, type, points, transforms) {
+                var id = attr.id;
+                // create the global gradient element
+                var gradient;
+                gradient = KIP.createSVGElem(SVGGradientTypeEnum[type] + "Gradient", attr);
+                this._elems.base = gradient;
+                // Apply the points
+                this._createPoints(gradient, points);
+                // Add to our element & our collection
+                attr.parent.appendChild(gradient);
+                // Add transform points (BROKEN?)
+                this._createTransforms(transforms, id);
+                return attr;
+            };
+            /**...........................................................................
+             * _createPoints
+             * ...........................................................................
+             * @param parent
+             * @param points
+             * ...........................................................................
+             */
+            GradientElement.prototype._createPoints = function (parent, points) {
+                for (var _i = 0, points_4 = points; _i < points_4.length; _i++) {
+                    var point = points_4[_i];
+                    var ptElem = KIP.createSVGElem("stop");
+                    ptElem.style.stopColor = point.color;
+                    ptElem.style.stopOpacity = point.opacity.toString();
+                    ptElem.setAttribute("offset", point.offset);
+                    parent.appendChild(ptElem);
+                }
+            };
+            /**...........................................................................
+             * _createTransforms
+             * ...........................................................................
+             * @param transforms
+             * @param id
+             * ...........................................................................
+             */
+            GradientElement.prototype._createTransforms = function (transforms, id) {
+                if (!transforms) {
+                    return;
+                }
+                //let tID: string = "gradient" + this.__gradients.length;
+                var tID = ""; //TODO: create real ID
+                var type = "linear"; //TODO: create real
+                var tGrad = KIP.createSVGElem(type + "Gradient", { id: tID });
+                tGrad.setAttribute("x1", transforms.start.x.toString());
+                tGrad.setAttribute("x2", transforms.end.x.toString());
+                tGrad.setAttribute("y1", transforms.start.y.toString());
+                tGrad.setAttribute("y2", transforms.end.y.toString());
+                tGrad.setAttribute("xlink:href", "#" + id);
+                //this._definitionsElement.appendChild(tGrad);
+                //this.__gradients.push(tGrad);
+                id = tID;
+            };
+            /**...........................................................................
+             * _updateExtrema
+             * ...........................................................................
+             */
+            GradientElement.prototype._updateExtrema = function () { };
+            /**...........................................................................
+             * _createElements
+             * ...........................................................................
+             */
+            GradientElement.prototype._createElements = function () { };
+            return GradientElement;
+        }(SVG.SVGElem));
+        SVG.GradientElement = GradientElement;
+        var LinearGradient = /** @class */ (function (_super) {
+            __extends(LinearGradient, _super);
+            function LinearGradient(points, transforms) {
+                return _super.call(this, SVGGradientTypeEnum.Linear, points, transforms) || this;
+            }
+            return LinearGradient;
+        }(GradientElement));
+        SVG.LinearGradient = LinearGradient;
+        var RadialGradient = /** @class */ (function (_super) {
+            __extends(RadialGradient, _super);
+            function RadialGradient(points, transforms) {
+                return _super.call(this, SVGGradientTypeEnum.Radial, points, transforms) || this;
+            }
+            return RadialGradient;
+        }(GradientElement));
+        SVG.RadialGradient = RadialGradient;
+    })(SVG = KIP.SVG || (KIP.SVG = {}));
+})(KIP || (KIP = {}));
+///<reference path="svgElement.ts" />
+var KIP;
+(function (KIP) {
+    var SVG;
+    (function (SVG) {
+        /**...........................................................................
+         * @class   GroupElement
+         * ...........................................................................
+         * @version 1.0
+         * @author  Kip Price
+         * ...........................................................................
+         */
         var GroupElement = /** @class */ (function (_super) {
             __extends(GroupElement, _super);
             function GroupElement() {
                 return _super !== null && _super.apply(this, arguments) || this;
             }
+            GroupElement.prototype._setAttributes = function (attributes) {
+                attributes.type = "g";
+                return attributes;
+            };
+            GroupElement.prototype._updateExtrema = function (attributes) { };
             return GroupElement;
-        }(SVGElem));
+        }(SVG.SVGElem));
         SVG.GroupElement = GroupElement;
+    })(SVG = KIP.SVG || (KIP.SVG = {}));
+})(KIP || (KIP = {}));
+///<reference path="svgElement.ts" />
+var KIP;
+(function (KIP) {
+    var SVG;
+    (function (SVG) {
+        /**...........................................................................
+         * @class   RectangleElement
+         * ...........................................................................
+         * Draw a rectangle on the SVG element
+         * @version 1.0
+         * @author  Kip Price
+         * ...........................................................................
+         */
+        var RectangleElement = /** @class */ (function (_super) {
+            __extends(RectangleElement, _super);
+            /**...........................................................................
+             * Create a rectangle element
+             * @param   x           The horizontal position of the rectangle
+             * @param   y           The vertical position of the rectangle
+             * @param   width       The width of the rectangle
+             * @param   height      The height of the rectangle
+             * @param   attributes  Attributes to start with
+             * ...........................................................................
+             */
+            function RectangleElement(x, y, width, height, attributes) {
+                return _super.call(this, attributes, x, y, width, height) || this;
+            }
+            /**...........................................................................
+             * _setAttributes
+             * ...........................................................................
+             * Set the appropriate attributes for this element
+             *
+             * @param   attributes  Initial set of attributes
+             * @param   x           The horizontal coordinate
+             * @param   y           The vertical coordinate
+             * @param   width       The width of the rectangle
+             * @param   height      The height of the rectangle
+             *
+             * @returns The updated attributes
+             * ...........................................................................
+             */
+            RectangleElement.prototype._setAttributes = function (attributes, x, y, width, height) {
+                attributes.type = "rect";
+                attributes.x = x;
+                attributes.y = y;
+                attributes.width = width;
+                attributes.height = height;
+                return attributes;
+            };
+            RectangleElement.prototype._updateExtrema = function (attributes) {
+                var rect = {
+                    x: attributes.x,
+                    y: attributes.y,
+                    w: attributes.width,
+                    h: attributes.height
+                };
+                this._extrema = this._basicRectToExtrema(rect);
+            };
+            /**...........................................................................
+             * _basicRectToExtrema
+             * ...........................................................................
+             * helper function to turn a basic rect to extrema
+             * @param	rect	Rect to convert
+             * @returns	The extrema that correspond with the rect
+             * ...........................................................................
+             */
+            RectangleElement.prototype._basicRectToExtrema = function (rect) {
+                var extrema = {
+                    min: { x: rect.x, y: rect.y },
+                    max: { x: rect.x + rect.w, y: rect.y + rect.h }
+                };
+                return extrema;
+            };
+            /**...........................................................................
+             * _checkBasicRectForBadData
+             * ...........................................................................
+             * helper function to check that a rectangle is actually renderable
+             * @param	rect	Determine if a rectangle is renderable
+             * ...........................................................................
+             */
+            RectangleElement.prototype._checkBasicRectForBadData = function (rect) {
+                var err = false;
+                // check for null values first
+                if (rect.x !== 0 && !rect.x) {
+                    err = true;
+                }
+                if (rect.y !== 0 && !rect.y) {
+                    err = true;
+                }
+                if (rect.w !== 0 && !rect.w) {
+                    err = true;
+                }
+                if (rect.h !== 0 && !rect.h) {
+                    err = true;
+                }
+                // Then for non-sensical
+                if (rect.w < 0) {
+                    err = true;
+                }
+                if (rect.h < 0) {
+                    err = true;
+                }
+                if (err) {
+                    throw new Error("invalid basic rectangle values");
+                }
+            };
+            return RectangleElement;
+        }(SVG.SVGElem));
+        SVG.RectangleElement = RectangleElement;
     })(SVG = KIP.SVG || (KIP.SVG = {}));
 })(KIP || (KIP = {}));
 var KIP;
@@ -18616,6 +19345,65 @@ var KIP;
             return SVGStyle;
         }());
         SVG.SVGStyle = SVGStyle;
+    })(SVG = KIP.SVG || (KIP.SVG = {}));
+})(KIP || (KIP = {}));
+///<reference path="svgElement.ts" />
+var KIP;
+(function (KIP) {
+    var SVG;
+    (function (SVG) {
+        var TextElement = /** @class */ (function (_super) {
+            __extends(TextElement, _super);
+            function TextElement() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            TextElement.prototype._setAttributes = function (attr) {
+                return attr;
+            };
+            TextElement.prototype._updateExtrema = function () { };
+            /**...........................................................................
+             * addtext
+             * ...........................................................................
+             * Adds a text element to the SVG canvas
+             * @param   text     The text to add
+             * @param   point    The point at which to add the point
+             * @param   originPt If provided, the origin point within the text element that defines where the text is drawn
+             * @param   attr     Any attributes that should be applied to the element
+             * @param   group    The group to add this element to
+             * @returns The text element added to the SVG
+             * ...........................................................................
+             */
+            TextElement.prototype.addText = function (text, point, originPt, attr, group) {
+                //TODO: actually use
+                return null;
+                // if (!attr) { attr = {}; }
+                // attr["x"] = point.x;
+                // attr["y"] = point.y;
+                // let textElem: SVGElement = this._addChild("text", attr, group);
+                // textElem.innerHTML = text;
+                // let box: IBasicRect;
+                // if (originPt) {
+                // 	box = this.measureElement(textElem);
+                // 	let newPt: IPoint = {
+                // 		x: box.w * originPt.x,
+                // 		y: (box.h * originPt.y) - box.h
+                // 	};
+                // 	textElem.setAttribute("x", newPt.x.toString());
+                // 	textElem.setAttribute("y", newPt.y.toString());
+                // 	box.x = newPt.x;
+                // 	box.y = newPt.y;
+                // }
+                // if (this._options.auto_resize) {
+                // 	if (!box) { this.measureElement(textElem); }
+                // 	this._updateExtrema({ min: {x: box.x, y: box.y}, max: {x: box.x + box.w, y: box.y + box.h} });
+                // }
+                // // Make sure we add the unselectable class
+                // addClass(textElem as any as HTMLElement, "unselectable");
+                // return textElem;
+            };
+            return TextElement;
+        }(SVG.SVGElem));
+        SVG.TextElement = TextElement;
     })(SVG = KIP.SVG || (KIP.SVG = {}));
 })(KIP || (KIP = {}));
 ///<reference path="../canvas/canvas.ts" />

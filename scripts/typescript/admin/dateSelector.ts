@@ -10,7 +10,7 @@ namespace BST {
         protected get _defaultValue(): Date { 
             let dt: Date;
             if (DateSelector._lastDate) {
-                dt = new Date(DateSelector._lastDate); 
+                dt = new Date(DateSelector._lastDate.toString()); 
             } else {
                 dt = KIP.Dates.getToday(); 
             }

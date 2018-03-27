@@ -290,7 +290,7 @@ var BST;
     * create a date selector specific to BST shows with a default time & date
     * @version 1.0
     */
-    var DateSelector = (function (_super) {
+    var DateSelector = /** @class */ (function (_super) {
         __extends(DateSelector, _super);
         function DateSelector() {
             return _super !== null && _super.apply(this, arguments) || this;
@@ -300,7 +300,7 @@ var BST;
             get: function () {
                 var dt;
                 if (DateSelector._lastDate) {
-                    dt = new Date(DateSelector._lastDate);
+                    dt = new Date(DateSelector._lastDate.toString());
                 }
                 else {
                     dt = KIP.Dates.getToday();
@@ -404,7 +404,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var Show = (function () {
+    var Show = /** @class */ (function () {
         /**...........................................................................
          * create a show class
          *
@@ -628,6 +628,42 @@ var BST;
         return Show;
     }());
     BST.Show = Show;
+})(BST || (BST = {}));
+var BST;
+(function (BST) {
+    /**
+     * @class   HomeData
+     *
+     * @version 1.0
+     * @author  Kip Price
+     */
+    var HomeData = /** @class */ (function () {
+        function HomeData() {
+        }
+        /**
+         * shouldShowSectionLink
+         *
+         * Determines if a particular link should show for a section, based
+         * on whether that section actually exists in code.
+         * @param   key     The key of the section
+         * @returns True if the key matches a section, false otherwise
+         */
+        HomeData.shouldShowSectionLink = function (key) {
+            switch (key) {
+                case "news":
+                case "getInvolved":
+                case "about":
+                case "resources":
+                case "donate":
+                case "seasonsSection":
+                    return true;
+                default:
+                    return false;
+            }
+        };
+        return HomeData;
+    }());
+    BST.HomeData = HomeData;
 })(BST || (BST = {}));
 var BST;
 (function (BST) {
@@ -1217,7 +1253,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var View = (function (_super) {
+    var View = /** @class */ (function (_super) {
         __extends(View, _super);
         function View(objElem) {
             var _this = _super.call(this, objElem) || this;
@@ -1292,7 +1328,7 @@ var BST;
 })(BST || (BST = {}));
 var BST;
 (function (BST) {
-    var SectionView = (function (_super) {
+    var SectionView = /** @class */ (function (_super) {
         __extends(SectionView, _super);
         /**
          * create a section
@@ -1384,7 +1420,7 @@ var BST;
      * @version 1.1
      * ...........................................................................
      */
-    var SubSection = (function (_super) {
+    var SubSection = /** @class */ (function (_super) {
         __extends(SubSection, _super);
         /**...........................................................................
          * Creates a subsection element
@@ -1489,7 +1525,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var SubSections = (function (_super) {
+    var SubSections = /** @class */ (function (_super) {
         __extends(SubSections, _super);
         function SubSections() {
             var _this = _super.call(this) || this;
@@ -1653,7 +1689,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var BSTHeader = (function (_super) {
+    var BSTHeader = /** @class */ (function (_super) {
         __extends(BSTHeader, _super);
         //#endregion
         /**...........................................................................
@@ -1813,6 +1849,9 @@ var BST;
             var item;
             for (var _i = 0, _a = this._homeData.menuItems; _i < _a.length; _i++) {
                 item = _a[_i];
+                if (item.type === BST.MenuTypeEnum.SECTION && !BST.HomeData.shouldShowSectionLink(item.link)) {
+                    continue;
+                }
                 var menuItemElem = this._createHomeMenuItem(item);
                 // make sure we can get to the appropriate spot
                 if (item.type === BST.MenuTypeEnum.SECTION) {
@@ -1821,6 +1860,14 @@ var BST;
                 this._elems.homeMenuElems.appendChild(menuItemElem);
             }
         };
+        /**...........................................................................
+         * _addMenuLink
+         * ...........................................................................
+         *
+         * @param elem
+         * @param link
+         * ...........................................................................
+         */
         BSTHeader.prototype._addMenuLink = function (elem, link) {
             var _this = this;
             elem.addEventListener("click", function () {
@@ -1961,14 +2008,16 @@ var BST;
          * ...........................................................................
          */
         BSTHeader.prototype._createShowStatistic = function (lbl, data) {
-            var comboLbl = KIP.createSimpleElement("", "lbl", lbl + ":");
-            var comboData = KIP.createSimpleElement("", "datum", data);
             var comboElem = KIP.createElement({
                 id: this._showData.showTitle.id + "|combo",
                 cls: "combo",
-                children: [comboLbl, comboData],
                 parent: this._elems.showStats
             });
+            if (!data) {
+                return comboElem;
+            }
+            var comboLbl = KIP.createElement({ cls: "lbl", content: lbl + ":", parent: comboElem });
+            var comboData = KIP.createElement({ cls: "datum", content: data, parent: comboElem });
             return comboElem;
         };
         //#endregion
@@ -2268,7 +2317,7 @@ var BST;
 (function (BST) {
     var Admin;
     (function (Admin) {
-        var HomeForm = (function (_super) {
+        var HomeForm = /** @class */ (function (_super) {
             __extends(HomeForm, _super);
             function HomeForm(homeData) {
                 var _this = _super.call(this, { cls: "adminHomeForm" }) || this;
@@ -2349,11 +2398,10 @@ var BST;
                     }),
                     getInvolved: new KIP.Forms.SectionElement("getinvolved", { label: "Get Involved" }, {
                         technicians: new KIP.Forms.ArrayElement("techInvolvement", { label: "Technicians" }, {
-                            icon: new Admin.BSTPhotoPathElement("involveIcon", {
+                            icon: new Admin.BSTPhotoPathElement("involveTechIcon", {
                                 label: "Icon",
                                 onChange: function (files) {
-                                    var filePath = "img/home/getInvolved/" + files[0].name;
-                                    return filePath;
+                                    return _this._onInvolvedPhotoChange(files);
                                 },
                                 onSave: function (files) {
                                     BST.Server.saveGetInvolvedPhoto(files[0], function (success) {
@@ -2363,20 +2411,19 @@ var BST;
                                     });
                                 }
                             }),
-                            text: new KIP.Forms.TextElement("involveText", { label: "Short description" }),
-                            content: new KIP.Forms.TextAreaElement("involvedContent", { label: "Detailed Description" }),
-                            contactInfo: new KIP.Forms.SectionElement("involveContact", { label: "Contact Info" }, {
-                                name: new KIP.Forms.TextElement("involveContactName", { label: "Contact's name" }),
-                                email: new KIP.Forms.TextElement("involveContactEmail", { label: "Contact E-Mail" }),
-                                phone: new KIP.Forms.TextElement("involveContactPhone", { label: "Phone Number" })
+                            text: new KIP.Forms.TextElement("involveTechText", { label: "Short description" }),
+                            content: new KIP.Forms.TextAreaElement("involvedTechContent", { label: "Detailed Description" }),
+                            contactInfo: new KIP.Forms.SectionElement("involveTechContact", { label: "Contact Info" }, {
+                                name: new KIP.Forms.TextElement("involveTechContactName", { label: "Contact's name" }),
+                                email: new KIP.Forms.TextElement("involveTechContactEmail", { label: "Contact E-Mail" }),
+                                phone: new KIP.Forms.TextElement("involveTechContactPhone", { label: "Phone Number" })
                             })
                         }),
-                        actors: new KIP.Forms.ArrayElement("techInvolvement", { label: "Actors" }, {
-                            icon: new Admin.BSTPhotoPathElement("involveIcon", {
+                        actors: new KIP.Forms.ArrayElement("actorInvolvement", { label: "Actors" }, {
+                            icon: new Admin.BSTPhotoPathElement("involveActorIcon", {
                                 label: "Icon",
                                 onChange: function (files) {
-                                    var filePath = "img/home/getInvolved/" + files[0].name;
-                                    return filePath;
+                                    return _this._onInvolvedPhotoChange(files);
                                 },
                                 onSave: function (files) {
                                     BST.Server.saveGetInvolvedPhoto(files[0], function (success) {
@@ -2386,20 +2433,19 @@ var BST;
                                     });
                                 }
                             }),
-                            text: new KIP.Forms.TextElement("involveText", { label: "Short description" }),
-                            content: new KIP.Forms.TextAreaElement("involvedContent", { label: "Detailed Description" }),
-                            contactInfo: new KIP.Forms.SectionElement("involveContact", { label: "Contact Info" }, {
-                                name: new KIP.Forms.TextElement("involveContactName", { label: "Contact's name" }),
-                                email: new KIP.Forms.TextElement("involveContactEmail", { label: "Contact E-Mail" }),
-                                phone: new KIP.Forms.TextElement("involveContactPhone", { label: "Phone Number" })
+                            text: new KIP.Forms.TextElement("involveActorText", { label: "Short description" }),
+                            content: new KIP.Forms.TextAreaElement("involvedActorContent", { label: "Detailed Description" }),
+                            contactInfo: new KIP.Forms.SectionElement("involveActorContact", { label: "Contact Info" }, {
+                                name: new KIP.Forms.TextElement("involveActorContactName", { label: "Contact's name" }),
+                                email: new KIP.Forms.TextElement("involveActorContactEmail", { label: "Contact E-Mail" }),
+                                phone: new KIP.Forms.TextElement("involveActorContactPhone", { label: "Phone Number" })
                             })
                         }),
-                        writers: new KIP.Forms.ArrayElement("techInvolvement", { label: "Writers" }, {
-                            icon: new Admin.BSTPhotoPathElement("involveIcon", {
+                        writers: new KIP.Forms.ArrayElement("writerInvolvement", { label: "Writers" }, {
+                            icon: new Admin.BSTPhotoPathElement("involveWriterIcon", {
                                 label: "Icon",
                                 onChange: function (files) {
-                                    var filePath = "img/home/getInvolved/" + files[0].name;
-                                    return filePath;
+                                    return _this._onInvolvedPhotoChange(files);
                                 },
                                 onSave: function (files) {
                                     BST.Server.saveGetInvolvedPhoto(files[0], function (success) {
@@ -2409,20 +2455,19 @@ var BST;
                                     });
                                 }
                             }),
-                            text: new KIP.Forms.TextElement("involveText", { label: "Short description" }),
-                            content: new KIP.Forms.TextAreaElement("involvedContent", { label: "Detailed Description" }),
-                            contactInfo: new KIP.Forms.SectionElement("involveContact", { label: "Contact Info" }, {
-                                name: new KIP.Forms.TextElement("involveContactName", { label: "Contact's name" }),
-                                email: new KIP.Forms.TextElement("involveContactEmail", { label: "Contact E-Mail" }),
-                                phone: new KIP.Forms.TextElement("involveContactPhone", { label: "Phone Number" })
+                            text: new KIP.Forms.TextElement("involveWriterText", { label: "Short description" }),
+                            content: new KIP.Forms.TextAreaElement("involvedWriterContent", { label: "Detailed Description" }),
+                            contactInfo: new KIP.Forms.SectionElement("involveWriterContact", { label: "Contact Info" }, {
+                                name: new KIP.Forms.TextElement("involveWriterContactName", { label: "Contact's name" }),
+                                email: new KIP.Forms.TextElement("involveWriterContactEmail", { label: "Contact E-Mail" }),
+                                phone: new KIP.Forms.TextElement("involveWriterContactPhone", { label: "Phone Number" })
                             })
                         }),
-                        directors: new KIP.Forms.ArrayElement("techInvolvement", { label: "Directors" }, {
-                            icon: new Admin.BSTPhotoPathElement("involveIcon", {
+                        directors: new KIP.Forms.ArrayElement("directorInvolvement", { label: "Directors" }, {
+                            icon: new Admin.BSTPhotoPathElement("involveDirectorIcon", {
                                 label: "Icon",
                                 onChange: function (files) {
-                                    var filePath = "img/home/getInvolved/" + files[0].name;
-                                    return filePath;
+                                    return _this._onInvolvedPhotoChange(files);
                                 },
                                 onSave: function (files) {
                                     BST.Server.saveGetInvolvedPhoto(files[0], function (success) {
@@ -2432,20 +2477,19 @@ var BST;
                                     });
                                 }
                             }),
-                            text: new KIP.Forms.TextElement("involveText", { label: "Short description" }),
-                            content: new KIP.Forms.TextAreaElement("involvedContent", { label: "Detailed Description" }),
-                            contactInfo: new KIP.Forms.SectionElement("involveContact", { label: "Contact Info" }, {
-                                name: new KIP.Forms.TextElement("involveContactName", { label: "Contact's name" }),
-                                email: new KIP.Forms.TextElement("involveContactEmail", { label: "Contact E-Mail" }),
-                                phone: new KIP.Forms.TextElement("involveContactPhone", { label: "Phone Number" })
+                            text: new KIP.Forms.TextElement("involveDirectorText", { label: "Short description" }),
+                            content: new KIP.Forms.TextAreaElement("involvedDirectorContent", { label: "Detailed Description" }),
+                            contactInfo: new KIP.Forms.SectionElement("involveDirectorContact", { label: "Contact Info" }, {
+                                name: new KIP.Forms.TextElement("involveDirectorContactName", { label: "Contact's name" }),
+                                email: new KIP.Forms.TextElement("involveDirectorContactEmail", { label: "Contact E-Mail" }),
+                                phone: new KIP.Forms.TextElement("involveDirectorContactPhone", { label: "Phone Number" })
                             })
                         }),
-                        general: new KIP.Forms.ArrayElement("techInvolvement", { label: "General" }, {
-                            icon: new Admin.BSTPhotoPathElement("involveIcon", {
+                        general: new KIP.Forms.ArrayElement("generalInvolvement", { label: "General" }, {
+                            icon: new Admin.BSTPhotoPathElement("involveGeneralIcon", {
                                 label: "Icon",
                                 onChange: function (files) {
-                                    var filePath = "img/home/getInvolved/" + files[0].name;
-                                    return filePath;
+                                    return _this._onInvolvedPhotoChange(files);
                                 },
                                 onSave: function (files) {
                                     BST.Server.saveGetInvolvedPhoto(files[0], function (success) {
@@ -2455,12 +2499,12 @@ var BST;
                                     });
                                 }
                             }),
-                            text: new KIP.Forms.TextElement("involveText", { label: "Short description" }),
-                            content: new KIP.Forms.TextAreaElement("involvedContent", { label: "Detailed Description" }),
-                            contactInfo: new KIP.Forms.SectionElement("involveContact", { label: "Contact Info" }, {
-                                name: new KIP.Forms.TextElement("involveContactName", { label: "Contact's name" }),
-                                email: new KIP.Forms.TextElement("involveContactEmail", { label: "Contact E-Mail" }),
-                                phone: new KIP.Forms.TextElement("involveContactPhone", { label: "Phone Number" })
+                            text: new KIP.Forms.TextElement("involveGeneralText", { label: "Short description" }),
+                            content: new KIP.Forms.TextAreaElement("involvedGeneralContent", { label: "Detailed Description" }),
+                            contactInfo: new KIP.Forms.SectionElement("involveGeneralContact", { label: "Contact Info" }, {
+                                name: new KIP.Forms.TextElement("involveGeneralContactName", { label: "Contact's name" }),
+                                email: new KIP.Forms.TextElement("involveGeneralContactEmail", { label: "Contact E-Mail" }),
+                                phone: new KIP.Forms.TextElement("involveGeneralContactPhone", { label: "Phone Number" })
                             })
                         }),
                     }),
@@ -2478,8 +2522,7 @@ var BST;
                     logoURL: new Admin.BSTPhotoPathElement("logoURL", {
                         label: "Logo",
                         onChange: function (files) {
-                            var filePath = "img/home/logo/" + files[0].name;
-                            return filePath;
+                            return _this._onInvolvedPhotoChange(files);
                         },
                         onSave: function (files) {
                             BST.Server.saveLogoPhoto(files[0], function (success) {
@@ -2492,8 +2535,7 @@ var BST;
                     bgURL: new Admin.BSTPhotoPathElement("backgroundImg", {
                         label: "Background Image",
                         onChange: function (files) {
-                            var filePath = "img/home/bg/" + files[0].name;
-                            return filePath;
+                            return _this._onInvolvedPhotoChange(files);
                         },
                         onSave: function (files) {
                             BST.Server.saveBgPhoto(files[0], function (success) {
@@ -2550,6 +2592,10 @@ var BST;
             HomeForm.prototype.update = function (home) {
                 this._form.update(home);
             };
+            HomeForm.prototype._onInvolvedPhotoChange = function (files) {
+                var filePath = "img/home/bg/" + files[0].name;
+                return filePath;
+            };
             return HomeForm;
         }(BST.View));
         Admin.HomeForm = HomeForm;
@@ -2567,7 +2613,7 @@ var BST;
          * @author  Kip Price
          * ...........................................................................
          */
-        var ShowForm = (function (_super) {
+        var ShowForm = /** @class */ (function (_super) {
             __extends(ShowForm, _super);
             /**...........................................................................
              * Creates a show form
@@ -2985,7 +3031,7 @@ var BST;
             return ShowForm;
         }(BST.View));
         Admin.ShowForm = ShowForm;
-        var BSTPhotoPathElement = (function (_super) {
+        var BSTPhotoPathElement = /** @class */ (function (_super) {
             __extends(BSTPhotoPathElement, _super);
             function BSTPhotoPathElement() {
                 return _super !== null && _super.apply(this, arguments) || this;
@@ -3018,7 +3064,7 @@ var BST;
          * @version 1.0
          * ...........................................................................
          */
-        var AdminView = (function (_super) {
+        var AdminView = /** @class */ (function (_super) {
             __extends(AdminView, _super);
             /** create the admin page */
             function AdminView() {
@@ -3457,7 +3503,7 @@ var BST;
 (function (BST) {
     var Admin;
     (function (Admin) {
-        var DeleteShowForm = (function (_super) {
+        var DeleteShowForm = /** @class */ (function (_super) {
             __extends(DeleteShowForm, _super);
             /**
              * Create the view for deleting shows
@@ -3593,7 +3639,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var AboutSection = (function (_super) {
+    var AboutSection = /** @class */ (function (_super) {
         __extends(AboutSection, _super);
         function AboutSection() {
             return _super !== null && _super.apply(this, arguments) || this;
@@ -3649,7 +3695,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var MissionSubsection = (function (_super) {
+    var MissionSubsection = /** @class */ (function (_super) {
         __extends(MissionSubsection, _super);
         function MissionSubsection() {
             return _super !== null && _super.apply(this, arguments) || this;
@@ -3673,7 +3719,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var BoardStaffSubsection = (function (_super) {
+    var BoardStaffSubsection = /** @class */ (function (_super) {
         __extends(BoardStaffSubsection, _super);
         function BoardStaffSubsection() {
             return _super !== null && _super.apply(this, arguments) || this;
@@ -3800,7 +3846,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var HistorySubsection = (function (_super) {
+    var HistorySubsection = /** @class */ (function (_super) {
         __extends(HistorySubsection, _super);
         function HistorySubsection() {
             return _super !== null && _super.apply(this, arguments) || this;
@@ -3896,7 +3942,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var BylawsSubsection = (function (_super) {
+    var BylawsSubsection = /** @class */ (function (_super) {
         __extends(BylawsSubsection, _super);
         function BylawsSubsection() {
             return _super !== null && _super.apply(this, arguments) || this;
@@ -3947,7 +3993,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var GetInvolvedSection = (function (_super) {
+    var GetInvolvedSection = /** @class */ (function (_super) {
         __extends(GetInvolvedSection, _super);
         function GetInvolvedSection() {
             return _super !== null && _super.apply(this, arguments) || this;
@@ -3984,7 +4030,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var InvolvementPopup = (function (_super) {
+    var InvolvementPopup = /** @class */ (function (_super) {
         __extends(InvolvementPopup, _super);
         //#endregion
         /**...........................................................................
@@ -4164,7 +4210,7 @@ var BST;
      * @author  Kip Price
      * ...........................................................................
      */
-    var InvolvementSubsection = (function (_super) {
+    var InvolvementSubsection = /** @class */ (function (_super) {
         __extends(InvolvementSubsection, _super);
         function InvolvementSubsection() {
             return _super !== null && _super.apply(this, arguments) || this;
@@ -4188,6 +4234,12 @@ var BST;
             for (idx; idx < this._data.length; idx += 1) {
                 var involvedItem = this._createGetInvolvedItem(this._data[idx]);
                 this._elems.content.appendChild(involvedItem);
+            }
+            if (this._data.length === 0) {
+                this._elems.content.appendChild(KIP.createElement({
+                    cls: "noData",
+                    content: "Nothing right now; check back later."
+                }));
             }
         };
         /**...........................................................................
@@ -4268,6 +4320,10 @@ var BST;
             },
             ".getInvolved.mobile .involvementSubsection .involvementWrapper": {
                 height: "10vw"
+            },
+            ".getInvolved .noData": {
+                color: "rgba(0,0,0,.5)",
+                fontSize: "0.9em"
             }
         };
         return InvolvementSubsection;
@@ -4282,7 +4338,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var NewsSection = (function (_super) {
+    var NewsSection = /** @class */ (function (_super) {
         __extends(NewsSection, _super);
         function NewsSection() {
             var _this = _super !== null && _super.apply(this, arguments) || this;
@@ -4445,7 +4501,7 @@ var BST;
 })(BST || (BST = {}));
 var BST;
 (function (BST) {
-    var HomeView = (function (_super) {
+    var HomeView = /** @class */ (function (_super) {
         __extends(HomeView, _super);
         /** initialize the view */
         function HomeView(data, header) {
@@ -4467,30 +4523,63 @@ var BST;
                 return;
             }
             // TOP SECTION: CURRENT SHOW AND OLD SHOWS
-            var seasonsView = new BST.SeasonsSidelineView(this._header);
+            var sidebar = new BST.SeasonsSidelineView(this._header);
             // SECTIONS
-            var newsSection = this._createNewsSection();
-            var involvedSection = this._createGetInvolvedSection();
-            var aboutSection = this._createAboutSection();
-            var resourcesSection = this._createResourcesSection();
-            var donateSection = this._createDonateSection();
+            var sections = this._determineSections();
+            sections.splice(0, 0, sidebar.base);
             // CREATE THE PAGE
             var page = KIP.createElement({
                 id: "home",
                 cls: "home",
-                children: [
-                    //menu.base,
-                    seasonsView.base,
-                    newsSection.base,
-                    involvedSection.base,
-                    aboutSection.base,
-                    resourcesSection.base,
-                    donateSection.base
-                ]
+                children: sections
             });
             this._elems.base = page;
             // update the bg image of the page
             document.body.style.backgroundImage = "url(" + this._data.bgURL + ")";
+        };
+        /**
+         * _determineSections
+         *
+         * Figure out which sections should be displayed
+         * @returns The array of sections to display
+         *
+         */
+        HomeView.prototype._determineSections = function () {
+            var sections = [];
+            for (var _i = 0, _a = this._data.menuItems; _i < _a.length; _i++) {
+                var menuItem = _a[_i];
+                var section = this._determineSection(menuItem.link);
+                if (!section) {
+                    continue;
+                }
+                sections.push(section.base);
+            }
+            return sections;
+        };
+        /**
+         * _determineSection
+         *
+         * Figure out which section should be created
+         * @param   key     The key for this section
+         * @returns The created section
+         */
+        HomeView.prototype._determineSection = function (key) {
+            switch (key) {
+                case "news":
+                    return this._createNewsSection();
+                case "getInvolved":
+                    return this._createGetInvolvedSection();
+                case "about":
+                    return this._createAboutSection();
+                case "resources":
+                    return this._createResourcesSection();
+                case "donate":
+                    return this._createDonateSection();
+                case "seasonsSection":
+                    return this._createSeasonsSection();
+                default:
+                    return null;
+            }
         };
         /**...........................................................................
          * _createAboutSection
@@ -4551,6 +4640,16 @@ var BST;
             section.data = this._data.donateInfo;
             return section;
         };
+        /**...........................................................................
+         * _createSeasonsSection
+         * ...........................................................................
+         *
+         * ...........................................................................
+         */
+        HomeView.prototype._createSeasonsSection = function () {
+            var section = new BST.SeasonsSection("seasonsSection", "SEASONS", "seasonsSection");
+            return section;
+        };
         /** styles for the home view */
         HomeView._uncoloredStyles = {
             "body": {
@@ -4573,7 +4672,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var CurrentShowView = (function (_super) {
+    var CurrentShowView = /** @class */ (function (_super) {
         __extends(CurrentShowView, _super);
         /**...........................................................................
          * Create the view that displays the current show
@@ -4789,13 +4888,30 @@ var BST;
         CurrentShowView.prototype._createWriterAndDirectorDetails = function (showTitle) {
             var writerDirectorBox = KIP.createSimpleElement("", "writerDirector");
             if (showTitle.writer !== showTitle.director) {
-                var writer = KIP.createSimpleElement("", "writer", "Written by: " + showTitle.writer, null, null, writerDirectorBox);
-                var director = KIP.createSimpleElement("", "director", "Directed by: " + showTitle.director, null, null, writerDirectorBox);
+                this._createWriterOrDirectorDetailElem("Written by", showTitle.writer, writerDirectorBox);
+                this._createWriterOrDirectorDetailElem("Directed by", showTitle.director, writerDirectorBox);
             }
             else {
-                writerDirectorBox.innerHTML = "Written and Directed by: " + showTitle.writer;
+                this._createWriterOrDirectorDetailElem("Written and Directed by", showTitle.writer, writerDirectorBox);
             }
             return writerDirectorBox;
+        };
+        /**...........................................................................
+         * _createWriterOrDirectorDetailElem
+         * ...........................................................................
+         * @param lbl
+         * @param data
+         * @param parent
+         * ...........................................................................
+         */
+        CurrentShowView.prototype._createWriterOrDirectorDetailElem = function (lbl, data, parent) {
+            var wrapper = KIP.createElement({ cls: "writerDirectorWrapper", parent: parent });
+            if (!data) {
+                return wrapper;
+            }
+            var lblElem = KIP.createElement({ cls: "lbl", content: lbl + ": ", parent: wrapper });
+            var dataElem = KIP.createElement({ cls: "data", content: data, parent: wrapper });
+            return wrapper;
         };
         /**...........................................................................
          * _createButtons
@@ -4992,6 +5108,17 @@ var BST;
                 width: "100%",
                 fontSize: "1.2em"
             },
+            ".writerDirectorWrapper": {
+                display: "flex",
+                alignItems: "center",
+                nested: {
+                    ".lbl": {
+                        fontSize: "0.8em",
+                        color: "rgba(0,0,0,.8)",
+                        paddingRight: "5px"
+                    }
+                }
+            }
         };
         return CurrentShowView;
     }(BST.View));
@@ -5005,7 +5132,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var SeasonsSidelineView = (function (_super) {
+    var SeasonsSidelineView = /** @class */ (function (_super) {
         __extends(SeasonsSidelineView, _super);
         /**...........................................................................
          * construct the view for the seasons on the side of the home page
@@ -5214,7 +5341,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var ResourcesSection = (function (_super) {
+    var ResourcesSection = /** @class */ (function (_super) {
         __extends(ResourcesSection, _super);
         function ResourcesSection() {
             return _super !== null && _super.apply(this, arguments) || this;
@@ -5299,50 +5426,239 @@ var BST;
 })(BST || (BST = {}));
 var BST;
 (function (BST) {
-    ;
-    var SeasonsSection = (function (_super) {
+    /**...........................................................................
+     * @class   SeasonsSection
+     * ...........................................................................
+     * @version 1.0
+     * @author  Kip Price
+     * ...........................................................................
+    */
+    var SeasonsSection = /** @class */ (function (_super) {
         __extends(SeasonsSection, _super);
-        function SeasonsSection() {
-            return _super !== null && _super.apply(this, arguments) || this;
+        /**...........................................................................
+         * Create the section that will hold our seasons
+         * @param id
+         * @param title
+         * @param addlCls
+         * ...........................................................................
+         */
+        function SeasonsSection(id, title, addlCls) {
+            var _this = _super.call(this, id, title, addlCls) || this;
+            _this._loadSeasons();
+            _this._createElements();
+            return _this;
         }
         /**...........................................................................
-         * _createSectionElements
+         * _loadSeasons
          * ...........................................................................
-         * Create the elements needed for the section
-         * ...........................................................................
-         */
-        SeasonsSection.prototype._createSectionElements = function () {
-            this._createSeasonSelector();
-        };
-        /**...........................................................................
-         * _createSeasonSelector
-         * ...........................................................................
-         * Create the season selector menu
+         * handle loading the servers
          * ...........................................................................
          */
-        SeasonsSection.prototype._createSeasonSelector = function () {
-            this._elems.seasonSelector = KIP.createElement({
-                cls: "seasonSelector"
+        SeasonsSection.prototype._loadSeasons = function () {
+            var _this = this;
+            BST.Server.loadSeasons(function (data) {
+                _this._data = data;
+                _this._createSectionElements();
             });
         };
         /**...........................................................................
-         * _getSeasonElement
+         * _createSectionElements
          * ...........................................................................
-         * Get the element to select a particular season
          *
-         * @param   season  The season year to select
-         *
-         * @returns The element for this particular element
          * ...........................................................................
          */
-        SeasonsSection.prototype._getSeasonElement = function (season) {
-            return document.getElementById("season" + season);
+        SeasonsSection.prototype._createSectionElements = function () {
+            var _this = this;
+            if (!this._data) {
+                return;
+            }
+            this._processData();
+            this._sectionContent = new BST.SubSections();
+            this._dataByYear.map(function (shows, key) {
+                var subsection = new SeasonShowSubsection(shows, key);
+                _this._sectionContent.addSubSection(subsection);
+            });
+            this._sectionContent.draw(this._elems.content);
         };
-        /** style the seasons section */
-        SeasonsSection._uncoloredStyles = {};
+        /**...........................................................................
+         * _processData
+         * ...........................................................................
+         *
+         * ...........................................................................
+         */
+        SeasonsSection.prototype._processData = function () {
+            if (this._dataByYear) {
+                return;
+            }
+            this._dataByYear = new KIP.Collection(KIP.CollectionTypeEnum.ReplaceDuplicateKeys);
+            // sort the shows by year
+            var sortedData = this._data.slice();
+            sortedData.sort(function (a, b) {
+                var dateA = new Date(a.endDate);
+                var dateB = new Date(b.endDate);
+                if (dateA < dateB) {
+                    return -1;
+                }
+                else if (dateA > dateB) {
+                    return 1;
+                }
+                else {
+                    return 0;
+                }
+            });
+            // add all the shows to the appropriate year
+            var miniShow;
+            for (var _i = 0, sortedData_1 = sortedData; _i < sortedData_1.length; _i++) {
+                miniShow = sortedData_1[_i];
+                var year = new Date(miniShow.endDate).getFullYear();
+                var yearArr = this._dataByYear.getValue(year.toString());
+                if (!yearArr) {
+                    yearArr = [];
+                }
+                yearArr.push(miniShow);
+                this._dataByYear.addElement(year.toString(), yearArr);
+            }
+            this._dataByYear.sort(function (a, b) {
+                if (a.key > b.key) {
+                    return -1;
+                }
+                else if (a.key < b.key) {
+                    return 1;
+                }
+                return 0;
+            });
+        };
+        /** styles for the section */
+        SeasonsSection._uncoloredStyles = {
+            ".seasonsSection .tabContainer": {
+                justifyContent: "flex-start",
+                nested: {
+                    ".tab": {
+                        paddingRight: "15px"
+                    }
+                }
+            }
+        };
         return SeasonsSection;
     }(BST.SectionView));
     BST.SeasonsSection = SeasonsSection;
+    /**...........................................................................
+     * @class   SeasonShowSubsection
+     * ...........................................................................
+     * @version 1.0
+     * @author  Kip Price
+     * ...........................................................................
+     */
+    var SeasonShowSubsection = /** @class */ (function (_super) {
+        __extends(SeasonShowSubsection, _super);
+        function SeasonShowSubsection() {
+            return _super !== null && _super.apply(this, arguments) || this;
+        }
+        /**...........................................................................
+         * _createContent
+         * ...........................................................................
+         *
+         * ...........................................................................
+         */
+        SeasonShowSubsection.prototype._createContent = function () {
+            this._createSeasonContainer();
+        };
+        /**...........................................................................
+         * _createSeasonContainer
+         * ...........................................................................
+         * Create the container for all of the shows
+         * ...........................................................................
+         */
+        SeasonShowSubsection.prototype._createSeasonContainer = function () {
+            this._elems.content = KIP.createElement({
+                cls: "seasonContainer",
+                parent: this._elems.base
+            });
+            for (var _i = 0, _a = this._data; _i < _a.length; _i++) {
+                var show = _a[_i];
+                this._createShowInSeason(show);
+            }
+        };
+        /**...........................................................................
+         * _createShowInSeason
+         * ...........................................................................
+         * Create a show in our season display
+         * @param   show    Create a show
+         * ...........................................................................
+         */
+        SeasonShowSubsection.prototype._createShowInSeason = function (show) {
+            var imgCls = "showIcon";
+            if (!show.icon) {
+                imgCls += " noIcon";
+            }
+            // create the actual show element
+            var showElem = KIP.createElement({
+                cls: "show",
+                parent: this._elems.content,
+                children: [
+                    { cls: imgCls, children: [
+                            { type: "img", attr: { src: show.icon } }
+                        ] },
+                    { cls: "showName", content: show.name },
+                    { cls: "subtitle", content: (show.subtitle ? ": " + show.subtitle : "") }
+                ],
+                eventListeners: {
+                    click: function () {
+                        BST.navigate(show.id, BST.NavigationType.SHOW);
+                    }
+                }
+            });
+        };
+        SeasonShowSubsection._uncoloredStyles = {
+            ".mobile .seasonContainer": {
+                maxHeight: "unset"
+            },
+            ".seasonContainer": {
+                display: "flex",
+                flexDirection: "column",
+                flexWrap: "wrap",
+                overflow: "hidden",
+                maxHeight: "250px",
+                nested: {
+                    ".show": {
+                        display: "flex",
+                        alignItems: "center",
+                        cursor: "pointer",
+                        paddingTop: "5px",
+                        paddingBottom: "5px",
+                        width: "50%",
+                        height: "50px",
+                        nested: {
+                            "&:hover": {
+                                textDecoration: "underline"
+                            },
+                            ".showIcon": {
+                                width: "30px",
+                                height: "30px",
+                                borderRadius: "100%",
+                                overflow: "hidden",
+                                backgroundColor: "#FFF",
+                                border: "1px solid rgba(0,0,0,.1)",
+                                nested: {
+                                    "&.noIcon": {
+                                        border: "1px solid transparent"
+                                    },
+                                    "img": {
+                                        width: "100%",
+                                    }
+                                }
+                            },
+                            ".showName": {
+                                paddingLeft: "10px"
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        return SeasonShowSubsection;
+    }(BST.SubSection));
+    BST.SeasonShowSubsection = SeasonShowSubsection;
 })(BST || (BST = {}));
 var BST;
 (function (BST) {
@@ -5353,7 +5669,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var DonateSection = (function (_super) {
+    var DonateSection = /** @class */ (function (_super) {
         __extends(DonateSection, _super);
         function DonateSection() {
             return _super !== null && _super.apply(this, arguments) || this;
@@ -5454,144 +5770,6 @@ var BST;
     }(BST.SectionView));
     BST.DonateSection = DonateSection;
 })(BST || (BST = {}));
-// namespace BST {
-//     export class HeaderView extends View {
-//         protected _data: IShowData;
-//         public set data(data: IShowData) { this._data = data; }
-//         /**...........................................................................
-//          * Create the header element
-//          * @param   show 
-//          * ...........................................................................
-//          */
-//         public constructor(show: IShowData) {
-//             super();
-//             this._data = show;
-//             this._createElements();
-//         }
-//         /**...........................................................................
-//          * _createElements
-//          * ...........................................................................
-//          * Create elements
-//          * ...........................................................................
-//          */
-//         protected _createElements(): void {
-//             if (!this._data) { return; }
-//             let mainNavBar: HTMLElement = this._createShowMenu();
-//             this._elems.base = KIP.createSimpleElement("", "showMenuHeader", "", null, [mainNavBar]);
-//         }
-//         /**...........................................................................
-//          * _createShowMenu
-//          * ...........................................................................
-//          * Create the main nav bar for the show 
-//          * 
-//          * @returns 
-//          * ...........................................................................
-//          */
-//         private _createShowMenu(): HTMLElement {
-//             //let bstPresents: HTMLElement = this._createBSTHeader();
-//             let showTitle: HTMLElement = this._createShowTitle();
-//             let showNavbar: HTMLElement = this._createShowSubNavbar();
-//             let menu: HTMLElement = KIP.createSimpleElement("", "showMenu", "", null, [showTitle, showNavbar]);
-//             return menu;
-//         }
-//         /** create the BST name and logo */
-// 		private _createBSTHeader (): HTMLElement {
-//             let logoURL: string = "../php/bstHome/logo.4.png";
-// 			let nameElem: HTMLElement = KIP.createSimpleElement("", "bstName subdued", "Broom Street Theater presents: ");
-// 			let logoElem: HTMLElement = KIP.createElement({
-// 				cls: "bstLogo",
-// 				type: "img",
-// 				attr: {
-// 					"src" : logoURL
-// 				}
-// 			});
-//             logoElem.addEventListener("click", () => {
-//                 navigate("", NavigationType.HOME);
-//             });
-// 			let wrapper: HTMLElement = KIP.createSimpleElement("", "menuName reverse", "", null, [nameElem, logoElem]);
-// 			return wrapper;
-// 		}
-//         /** create navigation buttons for the show details */
-//         private _createShowSubNavbar(): HTMLElement {
-//             let homeBtn: HTMLElement = KIP.createSimpleElement("", "subnavbar btn", "< HOME");
-//             homeBtn.addEventListener("click", () => {
-//                 navigate("", NavigationType.HOME);
-//             });
-//             let synopsisBtn: HTMLElement = this._createSubNavBarButton("SYNOPSIS", "|synopsis");
-//             let biosBtn: HTMLElement = this._createSubNavBarButton("BIOS", "|bios");
-//             let reviewBtn: HTMLElement = this._createSubNavBarButton("BUZZ", "|buzz");
-//             let tixBtn: HTMLElement = this._createSubNavBarButton("GET TICKETS", "|tix");
-//             let children: HTMLElement[] = [];
-//             children.push(homeBtn);
-//             children.push(synopsisBtn);
-//             if (Helpers.shouldShowBioSection(this._data)) { children.push(biosBtn); }
-//             if (Helpers.shouldShowBuzzSection(this._data)) { children.push(reviewBtn); }
-//             if (Helpers.shouldShowTicketSection(this._data)) { children.push(tixBtn); }
-//             let base: HTMLElement = KIP.createSimpleElement("", "subNavBar", "", null, children);
-//             return base;
-//         }
-//         /** helper to create a button in the show nav bar */
-//         private _createSubNavBarButton(lbl: string, sectionID: string): HTMLElement {
-//             let btn: HTMLElement = KIP.createSimpleElement("", "subnavbar btn", lbl);
-//             btn.addEventListener("click", () => {
-//                 scrollTo(this._data.showTitle.id + sectionID);
-//             });
-//             return btn;
-//         }
-//         /** creates the show details to show at the top */
-//         private _createShowTitle(): HTMLElement {
-//             let name: HTMLElement = KIP.createSimpleElement(this._data.showTitle.id + "|showName", "showName", this._data.showTitle.title);                              // name of the show
-//             let writerDirectorWrapper: HTMLElement = this._createWriterDirectorElement();                                               // the writer + director
-//             let base: HTMLElement = KIP.createSimpleElement(this._data.showTitle.id + "|showHeader", "showHeader", "", null, [name, writerDirectorWrapper]); // the base element
-//             return base;
-//         }
-//         /** create the writer - director pair */
-//         private _createWriterDirectorElement(): HTMLElement {
-//             let children: HTMLElement[] = [];
-//             // are the writer + director the same? Show one element then
-//             if (this._data.showTitle.writer === this._data.showTitle.director) {
-//                 let comboElem: HTMLElement = this._createComboElement();
-//                 children.push(comboElem);
-//             // otherwise create 2 elements, one for each person    
-//             } else {
-//                 let writerElem: HTMLElement = this._createWriterElement();
-//                 let directorElem: HTMLElement = this._createDirectorElement();
-//                 children.push(writerElem);
-//                 children.push(directorElem);
-//             }
-//             let datesWrapper: HTMLElement = this._createShowDatesElement();
-//             children.push(datesWrapper);
-//             // create the wrapping element to return
-//             let directorWriterWrapper: HTMLElement = KIP.createSimpleElement(this._data.showTitle.id + "|details", "details", "", null, children);    
-//             return directorWriterWrapper;
-//         }
-//         private _createShowDatesElement(): HTMLElement {
-//             let run: IRun = Helpers.getShowStartAndEndDates(this._data);
-//             let dateStr: string = KIP.Dates.shortDate(run.start) + " - " + KIP.Dates.shortDate(run.end);
-//             let dateLbl: HTMLElement = KIP.createSimpleElement("", "lbl", "Running: ");
-//             let dates: HTMLElement = KIP.createSimpleElement("", "content", dateStr);
-//             let dateWrapper: HTMLElement = KIP.createSimpleElement("", "dates", "", null, [dateLbl, dates]);
-//             return dateWrapper;
-//         }
-//         /** create the writer element */
-//         private _createWriterElement(): HTMLElement {
-//             let writerLbl: HTMLElement = KIP.createSimpleElement("", "lbl", "Written by: ");
-//             let writerData: HTMLElement = KIP.createSimpleElement("", "writer", this._data.showTitle.writer);
-//             let writerElem: HTMLElement = KIP.createSimpleElement(this._data.showTitle.id + "|writer", "writer", "", null, [writerLbl, writerData]);
-//             return writerElem;
-//         }
-//         /** create the director element */
-//         private _createDirectorElement(): HTMLElement {
-//             let directorLbl: HTMLElement = KIP.createSimpleElement("", "lbl", "Directed by: ");
-//             let directorData: HTMLElement = KIP.createSimpleElement("", "director", this._data.showTitle.director);
-//             let directorElem: HTMLElement = KIP.createSimpleElement(this._data.showTitle.id + "|director", "director", "", null, [directorLbl, directorData]);
-//             return directorElem;
-//         }
-//         /** if the writer and director are the same, show them as a combo */
-//         private _createComboElement(): HTMLElement {
-//         }
-//     }
-// } 
 var BST;
 (function (BST) {
     /*...........................................................................
@@ -5601,7 +5779,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var TicketSection = (function (_super) {
+    var TicketSection = /** @class */ (function (_super) {
         __extends(TicketSection, _super);
         function TicketSection() {
             var _this = _super !== null && _super.apply(this, arguments) || this;
@@ -5789,7 +5967,7 @@ var BST;
      * Section for reviews
      * @version 1.0
      */
-    var BuzzSection = (function (_super) {
+    var BuzzSection = /** @class */ (function (_super) {
         __extends(BuzzSection, _super);
         function BuzzSection() {
             return _super !== null && _super.apply(this, arguments) || this;
@@ -5840,7 +6018,7 @@ var BST;
 })(BST || (BST = {}));
 var BST;
 (function (BST) {
-    var BioSection = (function (_super) {
+    var BioSection = /** @class */ (function (_super) {
         __extends(BioSection, _super);
         function BioSection() {
             return _super !== null && _super.apply(this, arguments) || this;
@@ -5909,7 +6087,7 @@ var BST;
         return BioSection;
     }(BST.SectionView));
     BST.BioSection = BioSection;
-    var BioSubsection = (function (_super) {
+    var BioSubsection = /** @class */ (function (_super) {
         __extends(BioSubsection, _super);
         function BioSubsection() {
             return _super !== null && _super.apply(this, arguments) || this;
@@ -6127,7 +6305,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var SynopsisSection = (function (_super) {
+    var SynopsisSection = /** @class */ (function (_super) {
         __extends(SynopsisSection, _super);
         function SynopsisSection() {
             return _super !== null && _super.apply(this, arguments) || this;
@@ -6324,7 +6502,7 @@ var BST;
      * @author  Kip Price
      * ...........................................................................
      */
-    var PhotoLoopView = (function (_super) {
+    var PhotoLoopView = /** @class */ (function (_super) {
         __extends(PhotoLoopView, _super);
         /**...........................................................................
          * Create the element that can scroll through show photos
@@ -6534,7 +6712,7 @@ var BST;
      * @author  Kip Price
      * ...........................................................................
      */
-    var LinkedPhoto = (function () {
+    var LinkedPhoto = /** @class */ (function () {
         /**...........................................................................
          * Create the linked photo object
          * @param   photo   The photo to display for this node
@@ -6666,7 +6844,7 @@ var BST;
 })(BST || (BST = {}));
 var BST;
 (function (BST) {
-    var ScrollableShowPhotos = (function (_super) {
+    var ScrollableShowPhotos = /** @class */ (function (_super) {
         __extends(ScrollableShowPhotos, _super);
         function ScrollableShowPhotos(data) {
             var _this = _super.call(this) || this;
@@ -6724,7 +6902,7 @@ var BST;
 })(BST || (BST = {}));
 var BST;
 (function (BST) {
-    var AuditionsSection = (function (_super) {
+    var AuditionsSection = /** @class */ (function (_super) {
         __extends(AuditionsSection, _super);
         function AuditionsSection() {
             return _super !== null && _super.apply(this, arguments) || this;
@@ -6739,7 +6917,7 @@ var BST;
     var CODE = '<DIV ID="bpt_eventbody"><CENTER><BR><BR>Brown Paper Tickets Ticket Widget Loading...<BR><BR>' +
         '<A HREF="https://www.brownpapertickets.com/event/{{EVENT_ID}}">Click Here</A> to visit the Brown Paper' +
         ' Tickets event page.</CENTER><BR><BR></DIV>';
-    var SimpleTicketSection = (function (_super) {
+    var SimpleTicketSection = /** @class */ (function (_super) {
         __extends(SimpleTicketSection, _super);
         function SimpleTicketSection() {
             return _super !== null && _super.apply(this, arguments) || this;
@@ -6791,7 +6969,7 @@ var BST;
      * @version 1.0
      * ...........................................................................
      */
-    var ShowView = (function (_super) {
+    var ShowView = /** @class */ (function (_super) {
         __extends(ShowView, _super);
         /**...........................................................................
          * Create the view particular for a show

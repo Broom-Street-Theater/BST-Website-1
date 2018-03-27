@@ -567,6 +567,15 @@ declare namespace KIP {
     function roundToPlace(num: number, place: number): number;
 }
 declare namespace KIP {
+    abstract class Navigator<T extends string> {
+        /** keep track of the views */
+        private _views;
+        /** keep track of the parent element */
+        protected readonly abstract _parent: HTMLElement;
+        navigateTo<D extends Drawable>(navigationPath: T, constructor?: IConstructor<D>, ...addlArgs: any[]): void;
+    }
+}
+declare namespace KIP {
     interface IKeyValPair<T> {
         key?: string;
         val?: T;
@@ -576,6 +585,15 @@ declare namespace KIP {
     };
     interface ISelectOptions {
         [value: number]: string;
+    }
+    /**...........................................................................
+     * IConstructor
+     * ...........................................................................
+     * Generic tracker of a constructor function
+     * ...........................................................................
+     */
+    interface IConstructor<T> {
+        new (...addlArgs: any[]): T;
     }
     /**...........................................................................
      * IToggleBtnOptions
@@ -1380,6 +1398,23 @@ declare namespace KIP {
         w: number;
         h: number;
     }
+    /**...........................................................................
+     * @type IExtrema
+     * ...........................................................................
+     * Interface that stores a max point and a min point
+     * ...........................................................................
+     */
+    type IExtrema = IGenericExtrema<IPoint>;
+    /**...........................................................................
+     * @class IGenericExtrema
+     * ...........................................................................
+     * Handle any type of extreema
+     * ...........................................................................
+     */
+    interface IGenericExtrema<T> {
+        max: T;
+        min: T;
+    }
     /**--------------------------------------------------------------------------
      * @interface IVector
      * Keeps track of a vector definition
@@ -1697,6 +1732,13 @@ declare namespace KIP {
     function isDrawableElement(test: any): test is DrawableElement;
     /** generic function to check if an element has a particular class name in its inheritance tree */
     function isNamedClass<T extends NamedClass>(test: any, name: string): test is T;
+    /**
+     * isUpdatable
+     *
+     * Determine if this object has an update method
+     * @param test
+     */
+    function isUpdatable(test: any): test is IUpdatable;
 }
 declare namespace KIP {
     function generateUniqueID(prefix?: string): string;
@@ -1787,6 +1829,11 @@ declare namespace KIP {
 declare namespace KIP {
     interface ISet<T> {
         [key: string]: T;
+    }
+}
+declare namespace KIP {
+    interface IUpdatable {
+        update(...args: any[]): void;
     }
 }
 declare namespace KIP {
@@ -1915,6 +1962,8 @@ declare namespace KIP {
     class Collection<T> extends NamedClass implements IEquatable<Collection<T>> {
         /** Tracks of the data in this collection */
         private _data;
+        /** allow retrieval of a set of keys */
+        readonly keys: string[];
         /** Stores the sorted array of keys for the collection */
         private _sortedData;
         /** Whether we should augment or replace in this collection  */
@@ -2797,7 +2846,7 @@ declare namespace KIP {
          * the elements that make up a Drawable
          * ...........................................................................
          */
-        protected abstract _createElements(): void;
+        protected abstract _createElements(...args: any[]): void;
         /**...........................................................................
          * _shouldSkipCreateElements
          * ...........................................................................
@@ -3053,6 +3102,34 @@ declare namespace KIP {
         Drop = 2,
         Move = 3,
     }
+    /**...........................................................................
+     * IDraggableHandlers
+     * ...........................................................................
+     * Keep track of handlers for draggable elements
+     * ...........................................................................
+     */
+    interface IDraggableHandlers {
+        /** what to do when we start dragging over the target */
+        onDragEnter?: OnDragEnterFunction;
+        /** what to do when we stop dragging over the target */
+        onDragLeave?: OnDragLeaveFunction;
+        /** what to do when the element is dropped */
+        onDrop?: OnDropFunction;
+        /** wwhat to do when the element is moved */
+        onMove?: OnMoveFunction;
+    }
+    /**...........................................................................
+     * IDraggableOptions
+     * ...........................................................................
+     * Keep track of options for the draggable element
+     * ...........................................................................
+     */
+    interface IDraggableOptions extends IDraggableHandlers {
+        /** what element is considered the target of this function */
+        target?: HTMLElement;
+        /** keep track of whether we're using HTML5 events for dragging/dropping */
+        isNonStandard?: boolean;
+    }
     /** functions that can be used for a draggable element */
     type DraggableFunction = OnDragEnterFunction | OnDragLeaveFunction | OnDropFunction | OnMoveFunction;
     /**...........................................................................
@@ -3095,26 +3172,108 @@ declare namespace KIP {
          * ...........................................................................
          */
         constructor(obj?: IElemDefinition, dragTarget?: HTMLElement, useNonStandard?: boolean);
+        /**...........................................................................
+         * _addDefaultEventFunctions
+         * ...........................................................................
+         * Add handlers for each of these elements
+         * ...........................................................................
+         */
         private _addDefaultEventFunctions();
+        /**...........................................................................
+         * _addStandardDragEventListeners
+         * ...........................................................................
+         * Add
+         * ...........................................................................
+         */
         private _addStandardDragEventListeners();
+        /**...........................................................................
+         * _addNonStandardDragEventListeners
+         * ...........................................................................
+         *
+         * ...........................................................................
+         */
         private _addNonStandardDragEventListeners();
+        /**...........................................................................
+         * _addNonStandardTargetEventListeners
+         * ...........................................................................
+         * @param target
+         * ...........................................................................
+         */
         private _addNonStandardTargetEventListeners(target);
+        /**...........................................................................
+         * _addStandardTargetEventListeners
+         * ...........................................................................
+         * @param target
+         * ...........................................................................
+         */
         private _addStandardTargetEventListeners(target);
-        /**
+        /**...........................................................................
+         * addDragTarget
+         * ...........................................................................
          * Adds a new element that can receive the draggable element
-         * @param {HTMLElement} target The new target to allow drop events on
+         * @param 	target 	The new target to allow drop events on
+         * ...........................................................................
          */
         addDragTarget(target: HTMLElement): void;
+        /**...........................................................................
+         * _onDragEnterTarget
+         * ...........................................................................
+         * @param target
+         * @param e
+         * ...........................................................................
+         */
         protected _onDragEnterTarget(target: HTMLElement, e: Event): void;
+        /**...........................................................................
+         * _onDragLeaveTarget
+         * ...........................................................................
+         * @param target
+         * @param e
+         * ...........................................................................
+         */
         protected _onDragLeaveTarget(target: HTMLElement, e: Event): void;
+        /**...........................................................................
+         * _onMove
+         * ...........................................................................
+         * @param delta
+         * ...........................................................................
+         */
         protected _onMove(delta: IPoint): void;
+        /**...........................................................................
+         * _onDropOnTarget
+         * ...........................................................................
+         * @param target
+         * @param e
+         * ...........................................................................
+         */
         protected _onDropOnTarget(target: HTMLElement, e: Event): void;
-        overrideFunctions(dragEnter?: OnDragEnterFunction, dragLeave?: OnDragLeaveFunction, drop?: OnDropFunction, move?: OnMoveFunction, noReplace?: boolean): void;
+        /**...........................................................................
+         * _overrideFunctions
+         * ...........................................................................
+         * @param dragEnter
+         * @param dragLeave
+         * @param drop
+         * @param move
+         * @param noReplace
+         * ...........................................................................
+         */
+        overrideFunctions(handlers: IDraggableHandlers, noReplace?: boolean): void;
+        /**...........................................................................
+         * _overrideFunction
+         * ...........................................................................
+         * @param func
+         * @param def
+         * @param override
+         * @param no_replace
+         * ...........................................................................
+         */
         private _overrideFunction(func, def, override, no_replace?);
-        /**
+        /**...........................................................................
+         * _getDelta
+         * ...........................................................................
          * Gets the delta from the last measurement and this point
-         * @param   {MouseEvent} e The event we are measuring from
-         * @returns {IPoint}       The delta represented as a point
+         * @param	e 	The event we are measuring from
+         * @returns The delta represented as a point
+         * ...........................................................................
          */
         private _getDelta(e);
         /**...........................................................................
@@ -3158,15 +3317,11 @@ declare namespace KIP {
      * @param 	elem         	The element to make draggable
      * @param 	target       	The drop-target of the draggable
      * @param 	non_standard 	True if we should use non-standard events
-     * @param	dragEnterFunc	What to do when entering a drag target
-     * @param	dragLeaveFunc	What to do when leaving a drag target
-     * @param	dropFunc		What to do when an element is dropped
-     * @param	moveFunc		What to do when an element is moved
      *
      * @returns	HTML element that respects drag events
      * ...........................................................................
      */
-    function makeDraggable(elem: HTMLElement, target?: HTMLElement, non_standard?: boolean, dragEnterFunc?: OnDragEnterFunction, dragLeaveFunc?: OnDragLeaveFunction, dropFunc?: OnDropFunction, moveFunc?: OnMoveFunction): StandardElement;
+    function makeDraggable(elem: HTMLElement, options: IDraggableOptions): StandardElement;
 }
 declare namespace KIP {
     class ICanvasElement {
@@ -3177,291 +3332,6 @@ declare namespace KIP {
         Circle = 1,
         Polygon = 2,
         Star = 3,
-    }
-}
-declare namespace KIP {
-    /**...........................................................................
-     * IDynamicOption
-     * ...........................................................................
-     * Keep track of a choice for a dynamic selection
-     * ...........................................................................
-     */
-    interface IDynamicOption {
-        id: string;
-        display: string;
-    }
-    /**...........................................................................
-     * IDynamicSelectElems
-     * ...........................................................................
-     * Keep track of the elements used in the Dynamic Select field
-     * ...........................................................................
-     */
-    interface IDynamicSelectElems extends IDrawableElements {
-        input: HTMLInputElement;
-        drawer: HTMLElement;
-        optionContainer: HTMLElement;
-        loadingIcon: HTMLElement;
-        innerOptions: HTMLElement;
-        clearBtn: HTMLElement;
-    }
-    /**...........................................................................
-     * @class DynamicSelect
-     * Create a select element
-     * @version 1.0
-     * ...........................................................................
-     */
-    abstract class DynamicSelect extends Drawable {
-        /** keep track of the options that are available for this select field */
-        protected _availableOptions: Collection<DynamicOption>;
-        /** keep track of whether we are currently running a query */
-        protected _isQuerying: boolean;
-        /** keep track of the next query we need to run if we're already querying */
-        protected _nextQuery: string;
-        /** keep track of the current query we're running */
-        protected _currentQuery: string;
-        /** keep track of elements needed for the select element */
-        protected _elems: IDynamicSelectElems;
-        /** make sure we can let listeners know about changes in this element*/
-        protected _selectListeners: Function[];
-        /** keep track of general change listeners */
-        protected _changeListeners: Function[];
-        /** keep track of the listeners for searching */
-        protected _searchListeners: Function[];
-        /** keep track of the styles associated with this select field */
-        protected static _uncoloredStyles: KIP.Styles.IStandardStyles;
-        /**...........................................................................
-         * Create the Dynamic Select element
-         * ...........................................................................
-         */
-        constructor();
-        protected _createElements(): void;
-        /**...........................................................................
-         * _expandDrawer
-         * ...........................................................................
-         * Expand the drawer of options
-         * ...........................................................................
-         */
-        protected _expandDrawer(): void;
-        /**...........................................................................
-         * _collapseDrawer
-         * ...........................................................................
-         * Collapse the drawer of options
-         * ...........................................................................
-         */
-        protected _collapseDrawer(): void;
-        /**...........................................................................
-         * addOption
-         * ...........................................................................
-         * Adds an option to our select field
-         *
-         * @param   opt     The option to add
-         * ...........................................................................
-         */
-        addOption(opt: IDynamicOption): void;
-        /**...........................................................................
-         * addOptions
-         * ...........................................................................
-         * Add a set of options to the select element
-         * @param   opts    The options to add
-         * ...........................................................................
-         */
-        addOptions(opts: IDynamicOption[]): void;
-        addEventListener(type: "select" | "change" | "search", func: Function): void;
-        /**
-         * _notifyChangeListeners
-         *
-         * Notify any listeners that some content changed
-         */
-        protected _notifyChangeListeners(): void;
-        /**
-         * _notifySelectListeners
-         *
-         * Notify any listeners that we have selected an element
-         * @param   selectedOption  The option that was selected
-         */
-        protected _notifySelectListeners(selectedOption: DynamicOption): void;
-        /**................................................................
-         * _notifySearchListeners
-         * ................................................................
-         * @param search
-         * ................................................................
-         */
-        protected _notifySearchListeners(search: string): void;
-        /**...........................................................................
-         * _onChange
-         * ...........................................................................
-         * Handle when the text field changes
-         *
-         * @param   e   Change event
-         * ...........................................................................
-         */
-        protected _onQueryTextChange(e: Event): void;
-        /**...........................................................................
-         * _onKeyUp
-         * ...........................................................................
-         * Check if we need to handle an enter press in the text field
-         *
-         * @param   e   The keyboard event fired
-         * ...........................................................................
-         */
-        protected _onKeyEvent(e: KeyboardEvent): void;
-        /**...........................................................................
-         * _onBlur
-         * ...........................................................................
-         * Handle when focus is lost on the search element
-         * @param   event   The focus event
-         * ...........................................................................
-         */
-        protected _onBlur(event: Event): void;
-        /**...........................................................................
-         * _onFocus
-         * ...........................................................................
-         * Handle when focus is given to the search element
-         * @param   event   The focus event
-         * ...........................................................................
-         */
-        protected _onFocus(event: Event): void;
-        /**...........................................................................
-         * select
-         * ...........................................................................
-         * Handle selecting an element in the search field
-         * @param   selectedOption  The option that was selected
-         * ...........................................................................
-         */
-        select(selectedOption: DynamicOption): void;
-        /**
-         * search
-         *
-         * Handle searching for a string that wasn't an option in
-         * our search results
-         *
-         * @param searchStr
-         */
-        search(searchStr: string): void;
-        /**...........................................................................
-         * _updateFiltering
-         * ...........................................................................
-         * make sure our filtered text reflects the most up-to-date value in the text field
-         * ...........................................................................
-         */
-        _updateFiltering(curText: string): void;
-        /**...........................................................................
-         * _query
-         * ...........................................................................
-         * Handle querying for additional options to add
-         * @param   queryText   The text to search
-         * ...........................................................................
-         */
-        protected _query(queryText?: string): void;
-        clear(): void;
-        protected abstract _onQuery(queryText: string): KipPromise;
-    }
-    /**...........................................................................
-     * IDynamicOptionElems
-     * ...........................................................................
-     *
-     * ...........................................................................
-     */
-    interface IDynamicOptionElems extends IDrawableElements {
-        base: HTMLElement;
-        text: HTMLElement;
-    }
-    /**...........................................................................
-     * @class DynamicOption
-     * ...........................................................................
-     * Create an option for a dynamic select field
-     * @version 1.0
-     * @author  Kip Price
-     * ...........................................................................
-     */
-    class DynamicOption extends Drawable implements IDynamicOption {
-        /** unique ID for  */
-        protected _id: string;
-        readonly id: string;
-        /** display string for the option */
-        protected _display: string;
-        readonly display: string;
-        /** determine whether this option is currently filtered */
-        protected _isFiltered: boolean;
-        readonly isFiltered: boolean;
-        /** determine whether this option is selected */
-        protected _isSelected: boolean;
-        readonly isSelected: boolean;
-        /** keep track of the elements */
-        protected _elems: IDynamicOptionElems;
-        /** keep track of the dynamic select element for this option */
-        protected _selectParent: DynamicSelect;
-        /** track styles for the option field */
-        protected static _uncoloredStyles: KIP.Styles.IStandardStyles;
-        /**...........................................................................
-         * Create the dynamic option
-         *
-         * @param   opt     Details of the option we are creating
-         * ...........................................................................
-         */
-        constructor(opt: IDynamicOption, parent: DynamicSelect);
-        /**...........................................................................
-         * _shouldSkipCreateElements
-         * ...........................................................................
-         * Determine if we should avoid creating elements in the constructor
-         * @returns True if we should skip the create elements
-         * ...........................................................................
-         */
-        protected _shouldSkipCreateElements(): boolean;
-        /**...........................................................................
-         * _createElements
-         * ...........................................................................
-         * Create elements for this option
-         * ...........................................................................
-         */
-        protected _createElements(): void;
-        /**...........................................................................
-         * select
-         * ...........................................................................
-         * Select this particular element
-         * ...........................................................................
-         */
-        select(): boolean;
-        /**...........................................................................
-         * hilite
-         * ...........................................................................
-         * Hilite the current selected element
-         * ...........................................................................
-         */
-        hilite(): boolean;
-        /**...........................................................................
-         * unhilite
-         * ...........................................................................
-         * ...........................................................................
-         */
-        unhilite(): boolean;
-        /**...........................................................................
-         * _filter
-         * ...........................................................................
-         * Filter out this option if appropriate
-         * ...........................................................................
-         */
-        protected _filter(): void;
-        /**...........................................................................
-         * _unfilter
-         * ...........................................................................
-         * Remove filtering for this option if appropriate
-         * ...........................................................................
-         */
-        protected _unfilter(): void;
-        /**...........................................................................
-         * tryFilter
-         * ...........................................................................
-         * Asynchronous call to ensure that options that don't match the current
-         * select string are filtered out of the results
-         *
-         * @param   words   The words required in a relevant string for the option
-         *                  in order to not filter
-         *
-         * @returns Promise that will run the
-         * ...........................................................................
-         */
-        tryFilter(words: string[]): KipPromise;
     }
 }
 declare namespace KIP {
@@ -3659,170 +3529,6 @@ declare namespace KIP {
     }
 }
 declare namespace KIP {
-}
-declare namespace KIP {
-    /**...........................................................................
-     * IUnitTestElems
-     * ...........................................................................
-     * Elements for unit tests
-     * ...........................................................................
-     */
-    interface IUnitTestElems extends IDrawableElements {
-        testContainer: HTMLElement;
-        groups: HTMLElement[];
-    }
-    interface IVisualTestButton {
-        label: string;
-        callback: Function;
-    }
-    interface IUnitTestDetails {
-        params: any[];
-        result: any;
-        details: string;
-    }
-    class UnitTestUI extends Drawable {
-        /** styles to use for this unit test */
-        protected static _uncoloredStyles: Styles.IStandardStyles;
-        /** elements associated with the unit test UI */
-        protected _elems: IUnitTestElems;
-        /**...........................................................................
-         * Construct a new instance of the UnitTestUI
-         * ...........................................................................
-         */
-        constructor();
-        /**...........................................................................
-         * _createElements
-         * ...........................................................................
-         * Create the elements needed for the drawable
-         * ...........................................................................
-         */
-        protected _createElements(): void;
-        /**...........................................................................
-         * tset
-         * ...........................................................................
-         * State the result of whether a certain test passed or failed
-         *
-         * @param 	name 			The name of the assertion
-         * @param 	actualResult 	What the result of the test was
-         * @param 	expectedResult 	What should have been the result
-         * @param 	message 		If provided, the additional message to display
-         * ...........................................................................
-         */
-        test(name: string, actualResult: any, expectedResult: any, message?: string): void;
-        /**...........................................................................
-         * assert
-         * ...........................................................................
-         * Asserts whether the passed in evaluation is true or false
-         *
-         * @param 	name 			Name of the test we are running
-         * @param 	pass 			Evaluation of pass
-         * @param 	trueMessage 	What to show if the evaluation passes
-         * @param 	falseMessage 	What to show if the evaluation fails
-         * ...........................................................................
-         */
-        assert(name: string, pass: boolean, trueMessage?: string, falseMessage?: string): void;
-        /**...........................................................................
-         * startGroup
-         * ...........................................................................
-         * Creates a group of tests
-         *
-         * @param 	groupName 	The name of the group to display
-         * ...........................................................................
-         */
-        startGroup(groupName: string): void;
-        /**...........................................................................
-         * testFunction
-         * ...........................................................................
-         *
-         * @param funcToTest
-         * @param title
-         * @param tests
-         * ...........................................................................
-         */
-        testFunction(funcToTest: Function, title: string, tests: IUnitTestDetails[]): void;
-        /**...........................................................................
-         * visualTest
-         * ...........................................................................
-         * @param title
-         * @param buttons
-         * ...........................................................................
-         */
-        visualTest(title: string, buttons: IVisualTestButton[]): void;
-        /**...........................................................................
-         * test
-         * ...........................................................................
-         * Check if the actual and expected results actually match
-         *
-         * @param actualResult 		What the test returned
-         * @param expectedResult 	What the test should have returned
-         *
-         * @returns	True if the actual result matches the expected result
-         * ...........................................................................
-         */
-        testEquality(actualResult: any, expectedResult: any): boolean;
-        /**...........................................................................
-         * _buildValueString
-         * ...........................................................................
-         * Build the string that will show whether the result is a match or not
-         *
-         * @param	pass			If true, builds the pass string
-         * @param	actualResult	The value that was received
-         * @param	expectedResult	The value we should have gotten
-         *
-         * @returns	A string that's appropriate for this test's result
-         * ...........................................................................
-         */
-        protected _buildValueString(pass: boolean, actualResult: any, expectedResult: any): string;
-        /**...........................................................................
-         * _buildTestString
-         * ...........................................................................
-         * Creates a test element for the div
-         *
-         * @param	name			What to display as the name of the test
-         * @param 	pass    		True if the test passed
-         * @param	value_string	The value to display for a pass
-         * @param 	message 		Message to display with test
-         *
-         * @returns	The string displaying the result of the test
-         * ...........................................................................
-         */
-        protected _buildTestString(name: string, pass: boolean, value_string: string, message: string): string;
-        /**...........................................................................
-         * _passToString
-         * ...........................................................................
-         * Display whether the test passed or failed
-         *
-         * @param 	pass	True if the test passed
-         *
-         * @returns	Display string for the pass result
-         * ...........................................................................
-         */
-        protected _passToString(pass: boolean): string;
-        /**...........................................................................
-         * _constructTestUI
-         * ...........................................................................
-         * Create the display elements for a test
-         *
-         * @param 	name 			Name of the test
-         * @param 	pass 			True if the test passed
-         * @param 	value_string 	The value of the test
-         * @param 	message 		Optional message to go with the test
-         * ...........................................................................
-         */
-        protected _constructTestUI(name: string, pass: boolean, value_string: string, message?: string): void;
-        /**...........................................................................
-         * _logTest
-         * ...........................................................................
-         * Adds the test to the console
-         *
-         * @param 	name 		Name of the test
-         * @param 	pass 		True if the test passed
-         * @param 	value_str 	What the test returned
-         * @param 	message 	Optional messgae to go with the test
-         * ...........................................................................
-         */
-        protected _logTest(name: string, pass: boolean, value_str: string, message?: string): void;
-    }
 }
 declare namespace KIP {
     /**...........................................................................
@@ -5025,6 +4731,10 @@ declare namespace KIP.Forms {
         FILE_PATH = 16,
         COLOR = 17,
     }
+    interface ICanSaveTracker {
+        hasErrors: boolean;
+        hasMissingRequired: boolean;
+    }
     /** options for layout */
     enum FormElementLayoutEnum {
         MULTILINE = 0,
@@ -5086,9 +4796,13 @@ declare namespace KIP.Forms {
         onSave: IFileSaveCallback;
         onChange: IFileChangeCallback;
     }
+    interface IErrorString {
+        title?: string;
+        details?: string;
+    }
     /** handle when the element's data has changed */
     interface IValidateFunc<T> {
-        (data: T): boolean;
+        (data: T, errorString: IErrorString): boolean;
     }
     /** handle when another element of the form has changed */
     interface IOtherChangeFunc<T> {
@@ -5170,7 +4884,7 @@ declare namespace KIP.Forms {
         /** how this form element should be laid out */
         protected _layout: FormElementLayoutEnum;
         /** whether this element is required */
-        protected _required: boolean;
+        protected _isRequired: boolean;
         /** where this element sits in the order of the form */
         protected _position: number;
         /** handle listeners for events */
@@ -5289,7 +5003,14 @@ declare namespace KIP.Forms {
          * @returns True if this element is prepared to save
          * ...........................................................................
          */
-        canSave(): boolean;
+        canSave(): ICanSaveTracker;
+        /**...........................................................................
+         * _hasBlankRequiredElems
+         * ...........................................................................
+         * Check if this element has any misisng required elements
+         * ...........................................................................
+         */
+        protected _hasBlankRequiredElems(): boolean;
         /** ...........................................................................
          * update
          * ...........................................................................
@@ -5333,14 +5054,21 @@ declare namespace KIP.Forms {
          *  handle the shared validation function
          * ...........................................................................
          */
-        protected _validate(data: T): boolean;
+        protected _validate(data: T, errorString: IErrorString): boolean;
         /**...........................................................................
          * _onValidateError
          * ...........................................................................
          * display a default error message
          * ...........................................................................
          */
-        protected _onValidateError(msg?: string): void;
+        protected _onValidateError(err?: IErrorString): void;
+        /**...........................................................................
+        * _dispatchSavableChangeEvent
+        * ...........................................................................
+        * let any listeners know that we updated the savable status of this element
+        * ...........................................................................
+        */
+        protected _dispatchSavableChangeEvent(): void;
         /**...........................................................................
          * _dispatchChangeEvent
          * ...........................................................................
@@ -5560,7 +5288,7 @@ declare namespace KIP.Forms {
          * @returns True if we can save this element
          * ...........................................................................
          */
-        canSave<K extends keyof T>(): boolean;
+        canSave<K extends keyof T>(): ICanSaveTracker;
         /**...........................................................................
          * _onClear
          * ...........................................................................
@@ -5650,7 +5378,7 @@ declare namespace KIP.Forms {
          * @returns True if we can save this element
          * ...........................................................................
          */
-        canSave<K extends keyof T>(): boolean;
+        canSave<K extends keyof T>(): ICanSaveTracker;
         /** handle clearing out the array */
         protected _onClear(): void;
         onChangeOrder(child: ArrayChildElement<T>, direction: DirectionType, moveTo?: number): void;
@@ -5916,6 +5644,8 @@ declare namespace KIP.Forms {
         protected _additionalButtons: IFormButton[];
         /** keep track of whether there are changes in this form */
         protected _hasChanges: boolean;
+        /** keep track of whether we can save this form */
+        protected _canSaveTracker: ICanSaveTracker;
         /**...........................................................................
          * Form
          * ...........................................................................
@@ -5958,6 +5688,7 @@ declare namespace KIP.Forms {
          * ...........................................................................
          */
         protected _createCoreElem(options: IFormOptions, elems: IFormElements<F>): void;
+        protected _addSaveButtonUpdater(): void;
         /**...........................................................................
          * save
          * ...........................................................................
@@ -5966,7 +5697,35 @@ declare namespace KIP.Forms {
          * @returns The data contained in the form
          * ...........................................................................
          */
-        save(): F;
+        protected _save(): F;
+        /**...........................................................................
+         * trySave
+         * ...........................................................................
+         * Attempt to save the form
+         * ...........................................................................
+         */
+        trySave(): F;
+        /**...........................................................................
+         * _canSave
+         * ...........................................................................
+         * Check with our elements that we are able to save
+         * ...........................................................................
+         */
+        protected _canSave(): boolean;
+        /**...........................................................................
+         * _showCannotSaveMessage
+         * ...........................................................................
+         * Show popup indicating why we couldn't save this form
+         * ...........................................................................
+         */
+        protected _showCannotSaveMessage(): void;
+        /**...........................................................................
+         * _getCannotSaveMessage
+         * ...........................................................................
+         * Determine what message to show as to why the form cannot be saved
+         * ...........................................................................
+         */
+        protected _getCannotSaveMessage(): string;
         /**...........................................................................
          * _notifySaveListeners
          * ...........................................................................
@@ -6070,6 +5829,7 @@ declare namespace KIP.Forms {
         protected addFormElement<K extends keyof F>(key: K, formElem: FormElement<F[K]>): boolean;
     }
     const FORM_ELEM_CHANGE = "formelemchange";
+    const FORM_SAVABLE_CHANGE = "formsavablechange";
 }
 declare namespace KIP.Forms {
     function cloneTemplate<D>(template: IFormElemTemplate<D>): IFormElemTemplate<D>;
@@ -6588,6 +6348,352 @@ declare namespace KIP {
         data?: any;
     }
 }
+declare namespace KIP.SVG {
+    /**...........................................................................
+     * @class ISVGOptions
+     * ...........................................................................
+     * Interface for all options that apply to SVG Drawables
+     * ...........................................................................
+     */
+    interface ISVGOptions {
+        /** how big the svg element should be padded */
+        gutter?: number;
+        /** whether we should resize the SVG canvas to the viewport */
+        auto_resize?: boolean;
+        /** how much we should zoom horizontally */
+        zoom_x?: number;
+        /** how much we should zoom vertically */
+        zoom_y?: number;
+        /** how much we should move horizontally */
+        pan_x?: boolean;
+        /** how much we should move vertically */
+        pan_y?: boolean;
+        /** true if we should ignore events like pan/zoom on the canvas */
+        prevent_events?: boolean;
+    }
+    /**...........................................................................
+     * @class 	SVGDrawable
+     * ...........................................................................
+     * Create a drawable SVG canvas
+     * @version 1.1
+     * @author	Kip Price
+     * ...........................................................................
+     */
+    class SVGDrawable extends Drawable {
+        protected static _lastId: number;
+        protected static readonly _nextId: string;
+        /** The base element of the SVG canvas */
+        base: SVGElement;
+        /** Definitions for the SVG canvas */
+        private _definitionsElement;
+        /** gradients available in this canvas */
+        private __gradients;
+        /** The rectangle that defines the bounds of the canvas */
+        private _view;
+        readonly view: IBasicRect;
+        /** The maximum and minimum values of the SVG canvas */
+        private _extrema;
+        /** All elements that are drawn in the canvas */
+        protected _svgElems: Collection<SVGElement>;
+        protected _nonScaled: SVGElement[];
+        /** Any options that should be used for this canvas */
+        private _options;
+        /** The bounds of the SVG element in the actual window */
+        private _bounds;
+        /** The path that is currently being drawn in the canvas */
+        private _currentPath;
+        /** styles for the SVG element */
+        private _style;
+        readonly style: SVGStyle;
+        private _elemCollections;
+        /**...........................................................................
+         * Constructs a basic SVG canvas
+         * @param 	id     The ID of the canvas
+         * @param 	bounds The real-world (e.g. in window) bounds of the canvas
+         * @param 	opts   Any options that should be applied to the canvas
+         * ...........................................................................
+         */
+        constructor(id?: string, bounds?: IBasicRect, opts?: ISVGOptions);
+        /**...........................................................................
+         * _initializeInternalSizing
+         * ...........................................................................
+         * Make sure we have default values for extrema
+         * ...........................................................................
+         */
+        private _initializeInternalSizing();
+        /**...........................................................................
+         * _createDefaultOptions
+         * ...........................................................................
+         * Get the set of default options
+         * @returns	The created default options
+         * ...........................................................................
+         */
+        private _createDefaultOptions();
+        /**...........................................................................
+         * _createElements
+         * ...........................................................................
+         * Create the elements needed for this SVG drawable
+         * ...........................................................................
+         */
+        protected _createElements(): void;
+        /**...........................................................................
+         * _addEventListeners
+         * ...........................................................................
+         * Adds the relevant event listeners for the SVG object
+         * ...........................................................................
+         */
+        private _addEventListeners();
+        /**...........................................................................
+         * _onZoom
+         * ...........................................................................
+         * handle zooming in & out
+         * @param	direction	If positive, zooms in. If negative, zooms out
+         * ...........................................................................
+         */
+        protected _onZoom(direction: number): void;
+        /**...........................................................................
+         * _onPan
+         * ...........................................................................
+         * handle panning the SVG canvas
+         * @param	delta	The amount to pan by
+         * ...........................................................................
+         */
+        protected _onPan(delta: IPoint): void;
+        /**...........................................................................
+         * Sets the real-world width of the canvas
+         * @param 	w 	The width to set
+         * ...........................................................................
+         */
+        width: number;
+        /**...........................................................................
+         * Sets the real-world height of the canvas
+         * @param 	h 	The height to set
+         * ...........................................................................
+         */
+        height: number;
+        /**...........................................................................
+         * generateViewboxAttribute
+         * ...........................................................................
+         * Create a string that can be used in the viewbox attribute for the SVG
+         * @param  	set		True if we should also set the attribute after generating it
+         * @returns The viewbox attribute for the current view
+         * ...........................................................................
+         */
+        generateViewboxAttribute(set?: boolean): string;
+        /**...........................................................................
+         * _calculateView
+         * ...........................................................................
+         * Calculate what the view of the SVG should be, based on the extrema
+         * @returns True if the extrema were appropriately calculated
+         * ...........................................................................
+         */
+        protected _calculateView(): boolean;
+        /**...........................................................................
+         * _updateExtrema
+         * ...........................................................................
+         * Updates the extreme points of this SVG element after adding an element
+         * @param 	extrema 	The extrema of the element just added
+         * ...........................................................................
+         */
+        private _updateExtrema(extrema);
+        /**...........................................................................
+         * calculateSVGCoordinates
+         * ...........................................................................
+         * Calculates the SVG coordinates from real coordinates
+         * @param   pt	The real coordinates to convert
+         * @returns The SVG coordinates for this real point
+         * ...........................................................................
+         */
+        calculateSVGCoordinates(pt: IPoint): IPoint;
+        /**...........................................................................
+         * calculateScreenCoordinates
+         * ...........................................................................
+         * Calculate the real coordinates from SVG coordinates
+         * @param 	pt 	The point to convert to real coordinates
+         * @returns	The real coordinates for this SVG point
+         * ...........................................................................
+         */
+        calculateScreenCoordinates(pt: IPoint): IPoint;
+        /**...........................................................................
+         * _convertCoordinates
+         * ...........................................................................
+         *
+         * ...........................................................................
+         */
+        private _convertCoordinates(pt, numerator, denominator);
+        private _convertDistance(measure, numerator, denominator);
+        calculateSVGWidth(width: number): number;
+        calculateSVGHeight(height: number): number;
+        calculateScreenWidth(width: number): number;
+        calculateScreenHeight(height: number): number;
+        /**...........................................................................
+         * _addChild
+         * ...........................................................................
+         * @param 	type
+         * @param 	attributes
+         * @param 	parentGroup
+         * @returns	The created SVG element
+         * ...........................................................................
+         */
+        private _addChild(type, attributes?, parentGroup?);
+        private _initializeAttributes(attr, group?);
+        private _addChildElement(elem);
+        /**
+         * Adds a path to the SVG canvas
+         * @param   {IPathPoint[]} points   The points to add to the path
+         * @param   {IAttributes}  attr     Any attributes that should be applied
+         * @param   {SVGElement}   group    The group this path should be added to
+         * @param   {boolean}      noFinish True if we should finish the path without closing
+         * @returns {SVGElement}            The path that was created
+         */
+        addPath(points: IPathPoint[], attr?: IPathSVGAttributes, group?: SVGElement, noFinish?: boolean): SVGElement;
+        /**...........................................................................
+         * addRectangle
+         * ...........................................................................
+         * @param x
+         * @param y
+         * @param width
+         * @param height
+         * @param attr
+         * @param group
+         * ...........................................................................
+         */
+        addRectangle(x: number, y: number, width: number, height: number, attr?: ISVGAttributes, group?: SVGElement): SVGElement;
+        /**...........................................................................
+         * addCircle
+         * ...........................................................................
+         * adds a circle to the SVG canvas
+         * @param	centerPt
+         * @param	radius
+         * @param	attr
+         * @param	group
+         * @returns	The created circle
+         * ...........................................................................
+         */
+        addCircle(centerPt: IPoint, radius: number, attr?: IAttributes, group?: SVGElement): SVGElement;
+        /**...........................................................................
+         * regularPolygon
+         * ...........................................................................
+         * creates a regular polygon to the SVG canvas
+         * @param   centerPt The central point of the polygon
+         * @param   sides    The number of sides of the polygon
+         * @param   radius   The radius of the polygon
+         * @param   attr     Any additional attributes
+         * @param   group    The group the polygon should be added to
+         * @returns The created polygon on the SVG Canvas
+         * ...........................................................................
+         */
+        regularPolygon(centerPt: IPoint, sides: number, radius: number, attr?: IPathSVGAttributes, group?: SVGElement): SVGElement;
+        /**...........................................................................
+         * addRegularStar
+         * ...........................................................................
+         * Creates a regular star on the SVG canvas
+         * @param   centerPt      	The point at the center of the star
+         * @param   numberOfPoints 	The number of points of this star
+         * @param   radius        	[description]
+         * @param   innerRadius   	[description]
+         * @param   attr          	[description]
+         * @param   group         	[description]
+         * @returns The created star
+         * ...........................................................................
+         */
+        addRegularStar(centerPt: IPoint, numberOfPoints: number, radius: number, innerRadius: number, attr?: IPathSVGAttributes, group?: SVGElement): SVGElement;
+        /**...........................................................................
+         * addtext
+         * ...........................................................................
+         * Adds a text element to the SVG canvas
+         * @param   text     The text to add
+         * @param   point    The point at which to add the point
+         * @param   originPt If provided, the origin point within the text element that defines where the text is drawn
+         * @param   attr     Any attributes that should be applied to the element
+         * @param   group    The group to add this element to
+         * @returns The text element added to the SVG
+         * ...........................................................................
+         */
+        addText(text: string, point: IPoint, originPt: IPoint, attr: IAttributes, group: SVGElement): SVGElement;
+        addFlowableText(text: string, bounds: IBasicRect, attr: IAttributes, group: SVGElement): SVGElement;
+        /**...........................................................................
+         * addGroup
+         * ...........................................................................
+         * @param	attr
+         * @param 	group
+         * @returns	The created element
+         * ...........................................................................
+         */
+        addGroup(attr?: IAttributes, group?: SVGElement): SVGElement;
+        /**...........................................................................
+         * addGradient
+         * ...........................................................................
+         * Adds a gradient to the SVG canvas
+         * @param   type       The type of gradient to add
+         * @param   points     What points describe the gradient
+         * @param   transforms 	 ???
+         * @returns he created gradient
+         * ...........................................................................
+         */
+        addGradient(type: SVGGradientTypeEnum, points: IGradientPoint[], transforms: {
+            start: IPoint;
+            end: IPoint;
+        }): string;
+        /**
+         * Adds a particular shape to the SVG canvas
+         * @param   shapeType The type of shape to add
+         * @param   scale     What scale the shape should be drawn at
+         * @param   attr      Any attributes that should be applied to the element
+         * @param   group     What group the element should be added to
+         * @returns The created shape
+         */
+        addShape(shapeType: SVGShapeEnum, scale?: number, attr?: IAttributes, group?: SVGElement): SVGElement;
+        /**
+         * Adds a checkmark to the canvas with the provided scale
+         */
+        private _addCheckShape(scale, attr?, group?);
+        /**
+         * Adds an 'ex' to the canvas with the provided scale
+         */
+        private _addExShape(scale, attr?, group?);
+        /**
+         * Adds a plus to the canvas with the provided scale
+         */
+        private _addPlusShape(scale, attr?, group?);
+        /**...........................................................................
+         * _convertPointsToPathPoints
+         * ...........................................................................
+         * Helper function to turn an array of IPoint elements to IPathPoint elements
+         * @param   points 	The points to convert
+         * @param   scale  	The scale that should be applied to the IPoint before turning into a IPathPoint
+         * @returns Array of scaled IPathPoints
+         * ...........................................................................
+         */
+        private _convertPointsToPathPoints(points, scale?);
+        assignStyle(element: SVGElement): void;
+        /**...........................................................................
+         * rotateElement
+         * ...........................................................................
+         * Rotates an element around a particular point
+         * @param   elem         The element to rotate
+         * @param   degree       How many degrees to rotate the element
+         * @param   rotateAround What point to rotate around
+         * @returns The rotated SVG Element
+         * ...........................................................................
+         */
+        rotateElement(elem: SVGElement, degree: number, rotateAround?: IPoint): SVGElement;
+        animateElement(): void;
+        /**...........................................................................
+         * measureElement
+         * ...........................................................................
+         * Measures an element in the SVG canvas
+         * @param   element 	The element to measure
+         * @returns The dimensions of the element, in SVG coordinates
+         * ...........................................................................
+         */
+        measureElement(element: SVGElement): IBasicRect;
+        /**
+         * _saveOriginalView
+         */
+        protected _saveOriginalView: () => void;
+    }
+}
 declare namespace KIP.Old {
     interface IDictionary<T> {
         [key: string]: T;
@@ -6600,7 +6706,7 @@ declare namespace KIP.Old {
      * @param {Date} end   - OBSOLETE. The date at which the default viewing window should end. Can be a date string or a Date object
      * @param {Object} [dim]   - What the dimensions of SVG Element should be
      */
-    class ProjectWindow extends SVGDrawable {
+    class ProjectWindow extends SVG.SVGDrawable {
         headerGap: number;
         beginningRatio: number;
         lastBubble: any;
@@ -7179,6 +7285,291 @@ declare namespace KIP {
     function showYesNoForm(prompt: string, onSelect: IYesNoCallback): void;
 }
 declare namespace KIP {
+    /**...........................................................................
+     * IDynamicOption
+     * ...........................................................................
+     * Keep track of a choice for a dynamic selection
+     * ...........................................................................
+     */
+    interface IDynamicOption {
+        id: string;
+        display: string;
+    }
+    /**...........................................................................
+     * IDynamicSelectElems
+     * ...........................................................................
+     * Keep track of the elements used in the Dynamic Select field
+     * ...........................................................................
+     */
+    interface IDynamicSelectElems extends IDrawableElements {
+        input: HTMLInputElement;
+        drawer: HTMLElement;
+        optionContainer: HTMLElement;
+        loadingIcon: HTMLElement;
+        innerOptions: HTMLElement;
+        clearBtn: HTMLElement;
+    }
+    /**...........................................................................
+     * @class DynamicSelect
+     * Create a select element
+     * @version 1.0
+     * ...........................................................................
+     */
+    abstract class DynamicSelect extends Drawable {
+        /** keep track of the options that are available for this select field */
+        protected _availableOptions: Collection<DynamicOption>;
+        /** keep track of whether we are currently running a query */
+        protected _isQuerying: boolean;
+        /** keep track of the next query we need to run if we're already querying */
+        protected _nextQuery: string;
+        /** keep track of the current query we're running */
+        protected _currentQuery: string;
+        /** keep track of elements needed for the select element */
+        protected _elems: IDynamicSelectElems;
+        /** make sure we can let listeners know about changes in this element*/
+        protected _selectListeners: Function[];
+        /** keep track of general change listeners */
+        protected _changeListeners: Function[];
+        /** keep track of the listeners for searching */
+        protected _searchListeners: Function[];
+        /** keep track of the styles associated with this select field */
+        protected static _uncoloredStyles: KIP.Styles.IStandardStyles;
+        /**...........................................................................
+         * Create the Dynamic Select element
+         * ...........................................................................
+         */
+        constructor();
+        protected _createElements(): void;
+        /**...........................................................................
+         * _expandDrawer
+         * ...........................................................................
+         * Expand the drawer of options
+         * ...........................................................................
+         */
+        protected _expandDrawer(): void;
+        /**...........................................................................
+         * _collapseDrawer
+         * ...........................................................................
+         * Collapse the drawer of options
+         * ...........................................................................
+         */
+        protected _collapseDrawer(): void;
+        /**...........................................................................
+         * addOption
+         * ...........................................................................
+         * Adds an option to our select field
+         *
+         * @param   opt     The option to add
+         * ...........................................................................
+         */
+        addOption(opt: IDynamicOption): void;
+        /**...........................................................................
+         * addOptions
+         * ...........................................................................
+         * Add a set of options to the select element
+         * @param   opts    The options to add
+         * ...........................................................................
+         */
+        addOptions(opts: IDynamicOption[]): void;
+        addEventListener(type: "select" | "change" | "search", func: Function): void;
+        /**
+         * _notifyChangeListeners
+         *
+         * Notify any listeners that some content changed
+         */
+        protected _notifyChangeListeners(): void;
+        /**
+         * _notifySelectListeners
+         *
+         * Notify any listeners that we have selected an element
+         * @param   selectedOption  The option that was selected
+         */
+        protected _notifySelectListeners(selectedOption: DynamicOption): void;
+        /**................................................................
+         * _notifySearchListeners
+         * ................................................................
+         * @param search
+         * ................................................................
+         */
+        protected _notifySearchListeners(search: string): void;
+        /**...........................................................................
+         * _onChange
+         * ...........................................................................
+         * Handle when the text field changes
+         *
+         * @param   e   Change event
+         * ...........................................................................
+         */
+        protected _onQueryTextChange(e: Event): void;
+        /**...........................................................................
+         * _onKeyUp
+         * ...........................................................................
+         * Check if we need to handle an enter press in the text field
+         *
+         * @param   e   The keyboard event fired
+         * ...........................................................................
+         */
+        protected _onKeyEvent(e: KeyboardEvent): void;
+        /**...........................................................................
+         * _onBlur
+         * ...........................................................................
+         * Handle when focus is lost on the search element
+         * @param   event   The focus event
+         * ...........................................................................
+         */
+        protected _onBlur(event: Event): void;
+        /**...........................................................................
+         * _onFocus
+         * ...........................................................................
+         * Handle when focus is given to the search element
+         * @param   event   The focus event
+         * ...........................................................................
+         */
+        protected _onFocus(event: Event): void;
+        /**...........................................................................
+         * select
+         * ...........................................................................
+         * Handle selecting an element in the search field
+         * @param   selectedOption  The option that was selected
+         * ...........................................................................
+         */
+        select(selectedOption: DynamicOption): void;
+        /**
+         * search
+         *
+         * Handle searching for a string that wasn't an option in
+         * our search results
+         *
+         * @param searchStr
+         */
+        search(searchStr: string): void;
+        /**...........................................................................
+         * _updateFiltering
+         * ...........................................................................
+         * make sure our filtered text reflects the most up-to-date value in the text field
+         * ...........................................................................
+         */
+        _updateFiltering(curText: string): void;
+        /**...........................................................................
+         * _query
+         * ...........................................................................
+         * Handle querying for additional options to add
+         * @param   queryText   The text to search
+         * ...........................................................................
+         */
+        protected _query(queryText?: string): void;
+        clear(): void;
+        protected abstract _onQuery(queryText: string): KipPromise;
+    }
+    /**...........................................................................
+     * IDynamicOptionElems
+     * ...........................................................................
+     *
+     * ...........................................................................
+     */
+    interface IDynamicOptionElems extends IDrawableElements {
+        base: HTMLElement;
+        text: HTMLElement;
+    }
+    /**...........................................................................
+     * @class DynamicOption
+     * ...........................................................................
+     * Create an option for a dynamic select field
+     * @version 1.0
+     * @author  Kip Price
+     * ...........................................................................
+     */
+    class DynamicOption extends Drawable implements IDynamicOption {
+        /** unique ID for  */
+        protected _id: string;
+        readonly id: string;
+        /** display string for the option */
+        protected _display: string;
+        readonly display: string;
+        /** determine whether this option is currently filtered */
+        protected _isFiltered: boolean;
+        readonly isFiltered: boolean;
+        /** determine whether this option is selected */
+        protected _isSelected: boolean;
+        readonly isSelected: boolean;
+        /** keep track of the elements */
+        protected _elems: IDynamicOptionElems;
+        /** keep track of the dynamic select element for this option */
+        protected _selectParent: DynamicSelect;
+        /** track styles for the option field */
+        protected static _uncoloredStyles: KIP.Styles.IStandardStyles;
+        /**...........................................................................
+         * Create the dynamic option
+         *
+         * @param   opt     Details of the option we are creating
+         * ...........................................................................
+         */
+        constructor(opt: IDynamicOption, parent: DynamicSelect);
+        /**...........................................................................
+         * _shouldSkipCreateElements
+         * ...........................................................................
+         * Determine if we should avoid creating elements in the constructor
+         * @returns True if we should skip the create elements
+         * ...........................................................................
+         */
+        protected _shouldSkipCreateElements(): boolean;
+        /**...........................................................................
+         * _createElements
+         * ...........................................................................
+         * Create elements for this option
+         * ...........................................................................
+         */
+        protected _createElements(): void;
+        /**...........................................................................
+         * select
+         * ...........................................................................
+         * Select this particular element
+         * ...........................................................................
+         */
+        select(): boolean;
+        /**...........................................................................
+         * hilite
+         * ...........................................................................
+         * Hilite the current selected element
+         * ...........................................................................
+         */
+        hilite(): boolean;
+        /**...........................................................................
+         * unhilite
+         * ...........................................................................
+         * ...........................................................................
+         */
+        unhilite(): boolean;
+        /**...........................................................................
+         * _filter
+         * ...........................................................................
+         * Filter out this option if appropriate
+         * ...........................................................................
+         */
+        protected _filter(): void;
+        /**...........................................................................
+         * _unfilter
+         * ...........................................................................
+         * Remove filtering for this option if appropriate
+         * ...........................................................................
+         */
+        protected _unfilter(): void;
+        /**...........................................................................
+         * tryFilter
+         * ...........................................................................
+         * Asynchronous call to ensure that options that don't match the current
+         * select string are filtered out of the results
+         *
+         * @param   words   The words required in a relevant string for the option
+         *                  in order to not filter
+         *
+         * @returns Promise that will run the
+         * ...........................................................................
+         */
+        tryFilter(words: string[]): KipPromise;
+    }
+}
+declare namespace KIP {
     interface IShieldElements extends IDrawableElements {
         base: HTMLElement;
         shieldContent: HTMLElement;
@@ -7231,26 +7622,13 @@ declare namespace KIP {
 }
 declare namespace KIP.SVG {
     /**...........................................................................
-     * @class ISVGOptions
+     * ISVGElementElems
      * ...........................................................................
-     * Interface for all options that apply to SVG Drawables
+     * Keep track of elements on an SGVElem
      * ...........................................................................
      */
-    interface ISVGOptions {
-        /** how big the svg element should be padded */
-        gutter?: number;
-        /** whether we should resize the SVG canvas to the viewport */
-        auto_resize?: boolean;
-        /** how much we should zoom horizontally */
-        zoom_x?: number;
-        /** how much we should zoom vertically */
-        zoom_y?: number;
-        /** how much we should move horizontally */
-        pan_x?: boolean;
-        /** how much we should move vertically */
-        pan_y?: boolean;
-        /** true if we should ignore events like pan/zoom on the canvas */
-        prevent_events?: boolean;
+    interface ISVGElementElems extends IDrawableElements {
+        base: SVGElement;
     }
     /**...........................................................................
      * @class ISVGAttributes
@@ -7259,10 +7637,435 @@ declare namespace KIP.SVG {
      * ...........................................................................
      */
     interface ISVGAttributes extends IAttributes {
+        id?: string;
         unscalable?: boolean;
         svgStyle?: ISVGStyle;
+        parent?: SVGElement;
+        type?: string;
         [key: string]: any;
     }
+    /**...........................................................................
+     * @class   SVGElem
+     * ...........................................................................
+     * Creates an element on an SVG Drawable
+     * @version 1.1
+     * @author  Kip Price
+     * ...........................................................................
+     */
+    abstract class SVGElem extends Drawable {
+        /** unique identifier for the element */
+        id: string;
+        /** keep track of how this element is styled */
+        protected _style: SVGStyle;
+        readonly style: SVGStyle;
+        /** keep track of the elements in this SVGElement */
+        protected _elems: ISVGElementElems;
+        readonly base: SVGElement;
+        /** determine whether this element should be scalable */
+        protected _preventScaling: boolean;
+        readonly preventScaling: boolean;
+        /** keep track of the extrema for this element */
+        protected _extrema: IExtrema;
+        readonly extrema: IExtrema;
+        /** store the attributes */
+        protected _attributes: ISVGAttributes;
+        /**...........................................................................
+         * Creates an SVG element
+         * @param   attributes  The attributes to create this element with
+         * ...........................................................................
+         */
+        constructor(attributes: ISVGAttributes, ...addlArgs: any[]);
+        /**...........................................................................
+         * _shouldSkipCreateElements
+         * ...........................................................................
+         * Determine whether we should allow elements to be drawn as part of the
+         * constructor.
+         *
+         * @returns True, since we always need attributes
+         * ...........................................................................
+         */
+        protected _shouldSkipCreateElements(): boolean;
+        /**...........................................................................
+         * _createElements
+         * ...........................................................................
+         * Create the elements that make up this SVG Element
+         *
+         * @param   attributes  Attributes for this element
+         * ...........................................................................
+         */
+        protected _createElements(attributes: ISVGAttributes): void;
+        /**...........................................................................
+         * _setAttributes
+         * ...........................................................................
+         * Set the appropriate set of attributes for this element
+         *
+         * @param   attributes  The initial attributes
+         * @param   addlArgs    Anything additional we should be passing to the setAttributes function
+         *
+         * @returns The updated attributes
+         * ...........................................................................
+         */
+        protected abstract _setAttributes(attributes: ISVGAttributes, ...addlArgs: any[]): ISVGAttributes;
+        protected abstract _updateExtrema(attributes: ISVGAttributes): void;
+    }
+}
+declare namespace KIP.SVG {
+    interface ICurvePoint extends IPoint {
+        controls: IPoint[];
+    }
+    interface IArcPoint extends IPoint {
+        radius: IPoint;
+        xRotation: number;
+        largeArc: number;
+        sweepFlag: number;
+    }
+    type IPathPoint = IPoint | ICurvePoint | IArcPoint;
+    enum SVGShapeEnum {
+        CHECKMARK = 1,
+        X = 2,
+        PLUS = 3,
+    }
+    interface IPathSVGAttributes extends ISVGAttributes {
+        noFinish?: boolean;
+    }
+    interface IPathElems extends ISVGElementElems {
+        base: SVGPathElement;
+    }
+    /**...........................................................................
+     * @class   PathElement
+     * ...........................................................................
+     * @version 1.0
+     * @author  Kip Price
+     * ...........................................................................
+     */
+    class PathElement extends SVGElem {
+        /** keep track of elements in this path */
+        protected _elems: IPathElems;
+        /** keep track of points in this path */
+        protected _points: IPathPoint[];
+        constructor(points: IPathPoint[], attr: IPathSVGAttributes, ...addlArgs: any[]);
+        protected _setAttributes(attributes: ISVGAttributes, points: IPathPoint[]): ISVGAttributes;
+        protected _createElements(): void;
+        protected _updateExtrema(): void;
+        private _updateExtremaFromPoint(pt);
+        /**...........................................................................
+         * _checkForCurrentPath
+         * ...........................................................................
+         *
+         * ...........................................................................
+         */
+        private _checkForCurrentPath();
+        /**...........................................................................
+         * _constructPathAttribute
+         * ...........................................................................
+         * @param prefix
+         * @param point
+         * @returns	The appropriate path string
+         * ...........................................................................
+         */
+        private _constructPathAttribute(prefix, point);
+        private _pointToAttributeString(point);
+        private _addToPathAttribute(suffix);
+        protected _startPath(attr?: ISVGAttributes): SVGPathElement;
+        lineTo(point: IPoint): void;
+        moveTo(point: IPoint): void;
+        curveTo(point: ICurvePoint): void;
+        arcTo(point: IArcPoint): void;
+        /** closes the path so it creates an enclosed space */
+        closePath(): void;
+        /** indicates the path is finished without closing the path */
+        finishPathWithoutClosing(): void;
+        /**...........................................................................
+         * _calculatePolygonPoint
+         * ...........................................................................
+         * helper function to calculate a polygon's point at a certain angle
+         * ...........................................................................
+         */
+        protected _calculatePolygonPoint(centerPt: IPoint, currentAngle: number, radius: number): IPoint;
+    }
+}
+declare namespace KIP.SVG {
+    /**...........................................................................
+     * @class	PathExtensionElement
+     * ...........................................................................
+     * @version 1.0
+     * @author	Kip Price
+     * ...........................................................................
+     */
+    abstract class PathExtensionElement extends PathElement {
+        protected _setAttributes(attr: IPathSVGAttributes, ...addlArgs: any[]): IPathSVGAttributes;
+        protected abstract _generatePoints(...addlArgs: any[]): IPathPoint[];
+    }
+    /**...........................................................................
+     * @class	ArcElement
+     * ...........................................................................
+     * @version	1.0
+     * @author	Kip Price
+     * ...........................................................................
+     */
+    class ArcElement extends PathExtensionElement {
+        protected _generatePoints(attr: IPathSVGAttributes): IPathPoint[];
+        /**...........................................................................
+         * addPerfectArc
+         * ...........................................................................
+         * Adds a perfect arc to the SVG canvas
+         * //TODO: make real
+         * ...........................................................................
+         */
+        addPerfectArc(centerPt: IPoint, radius: number, startDegree: number, endDegree: number, direction: number, noRadii: boolean, attr?: IAttributes, group?: SVGElement): SVGElement;
+        /**...........................................................................
+         * _arcToExtrema
+         * ...........................................................................
+         * helper function to convert arc params to extrema
+         * ...........................................................................
+         */
+        private _arcToExtrema(startPt, endPt, centerPt, radius, startDeg, endDeg);
+    }
+    /**...........................................................................
+     * @class	PolygonElement
+     * ...........................................................................
+     * @version	1.0
+     * @author	Kip Price
+     * ...........................................................................
+     */
+    class PolygonElement extends PathExtensionElement {
+        constructor(centerPt: IPoint, sides: number, radius: number, attr: IPathSVGAttributes, innerRadius?: number);
+        protected _generatePoints(centerPt: IPoint, sides: number, radius: number, innerRadius?: number): IPathPoint[];
+    }
+    /**...........................................................................
+     * @class	StarElement
+     * ...........................................................................
+     * @version 1.0
+     * @author	Kip Price
+     * ...........................................................................
+     */
+    class StarElement extends PolygonElement {
+        constructor(centerPt: IPoint, numberOfPoints: number, radius: number, innerRadius: number, attr: IPathSVGAttributes);
+        protected _generatePoints(centerPt: IPoint, numberOfPoints: number, radius: number, innerRadius: number): IPathPoint[];
+    }
+    /**...........................................................................
+     * @class	CheckElement
+     * ...........................................................................
+     */
+    class CheckElement extends PathExtensionElement {
+        protected _generatePoints(): IPathPoint[];
+    }
+    /**...........................................................................
+     * @class	ExElement
+     * ...........................................................................
+     */
+    class ExElement extends PathExtensionElement {
+        protected _generatePoints(): IPathPoint[];
+    }
+    /**...........................................................................
+     * @class	PlusElement
+     * ...........................................................................
+     */
+    class PlusElement extends PathExtensionElement {
+        protected _generatePoints(): IPathPoint[];
+    }
+}
+declare namespace KIP.SVG {
+    interface ICircleSVGAttributes extends ISVGAttributes {
+        cx: number;
+        cy: number;
+        r: number;
+    }
+    /**...........................................................................
+     * @class   CircleElement
+     * ...........................................................................
+     * @version 1.0
+     * @author  Kip Price
+     * ...........................................................................
+     */
+    class CircleElement extends SVGElem {
+        /** keep track of attributes for this circle */
+        protected _attributes: ICircleSVGAttributes;
+        constructor(center: IPoint, radius: number, attributes: ISVGAttributes);
+        protected _setAttributes(attributes: ISVGAttributes, center: IPoint, radius: number): ISVGAttributes;
+        protected _updateExtrema(attributes: ISVGAttributes): void;
+        /**...........................................................................
+         * _extremaFromCenterPointAndRadius
+         * ...........................................................................
+         * helper function to calculate extrema from a central point and radius
+         * ...........................................................................
+         */
+        private _extremaFromCenterPointAndRadius(center, radius);
+    }
+}
+declare namespace KIP.SVG {
+    /**...........................................................................
+     * @class SVGGradientTypeEnum
+     * ...........................................................................
+     * Handle different types of gradients
+     * ...........................................................................
+     */
+    enum SVGGradientTypeEnum {
+        Linear = 1,
+        Radial = 2,
+    }
+    /**...........................................................................
+     * @class IGradientPoint
+     * ...........................................................................
+     * Keep track of a point used for gradients
+     * ...........................................................................
+     */
+    interface IGradientPoint {
+        point: IPoint;
+        color: string;
+        offset: string;
+        opacity: number;
+    }
+    /**...........................................................................
+     * ITransforms
+     * ...........................................................................
+     * ...........................................................................
+     */
+    interface ITransforms {
+        start: IPoint;
+        end: IPoint;
+    }
+    /**...........................................................................
+     * @class	GradientElement
+     * ...........................................................................
+     * @version 1.0
+     * @author	Kip Price
+     * ...........................................................................
+     */
+    abstract class GradientElement extends SVGElem {
+        /**...........................................................................
+         * @param type
+         * @param points
+         * @param transforms
+         * ...........................................................................
+         */
+        constructor(type: SVGGradientTypeEnum, points: IGradientPoint[], transforms: ITransforms);
+        /**...........................................................................
+         * _setAttributes
+         * ...........................................................................
+         * @param attr
+         * @param type
+         * @param points
+         * @param transforms
+         * ...........................................................................
+         */
+        protected _setAttributes(attr: ISVGAttributes, type: SVGGradientTypeEnum, points: IGradientPoint[], transforms: ITransforms): ISVGAttributes;
+        /**...........................................................................
+         * _createPoints
+         * ...........................................................................
+         * @param parent
+         * @param points
+         * ...........................................................................
+         */
+        private _createPoints(parent, points);
+        /**...........................................................................
+         * _createTransforms
+         * ...........................................................................
+         * @param transforms
+         * @param id
+         * ...........................................................................
+         */
+        private _createTransforms(transforms, id);
+        /**...........................................................................
+         * _updateExtrema
+         * ...........................................................................
+         */
+        protected _updateExtrema(): void;
+        /**...........................................................................
+         * _createElements
+         * ...........................................................................
+         */
+        protected _createElements(): void;
+    }
+    class LinearGradient extends GradientElement {
+        constructor(points: IGradientPoint[], transforms: ITransforms);
+    }
+    class RadialGradient extends GradientElement {
+        constructor(points: IGradientPoint[], transforms: ITransforms);
+    }
+}
+declare namespace KIP.SVG {
+    /**...........................................................................
+     * @class   GroupElement
+     * ...........................................................................
+     * @version 1.0
+     * @author  Kip Price
+     * ...........................................................................
+     */
+    class GroupElement extends SVGElem {
+        protected _setAttributes(attributes: ISVGAttributes): ISVGAttributes;
+        protected _updateExtrema(attributes: ISVGAttributes): void;
+    }
+}
+declare namespace KIP.SVG {
+    /**...........................................................................
+     * @class IRectSVGAttributes
+     * ...........................................................................
+     * Rectangle attributes
+     * ...........................................................................
+     */
+    interface IRectSVGAttributes extends ISVGAttributes {
+        x?: number;
+        y?: number;
+        width?: number;
+        height?: number;
+    }
+    /**...........................................................................
+     * @class   RectangleElement
+     * ...........................................................................
+     * Draw a rectangle on the SVG element
+     * @version 1.0
+     * @author  Kip Price
+     * ...........................................................................
+     */
+    class RectangleElement extends SVGElem {
+        protected _attributes: IRectSVGAttributes;
+        /**...........................................................................
+         * Create a rectangle element
+         * @param   x           The horizontal position of the rectangle
+         * @param   y           The vertical position of the rectangle
+         * @param   width       The width of the rectangle
+         * @param   height      The height of the rectangle
+         * @param   attributes  Attributes to start with
+         * ...........................................................................
+         */
+        constructor(x: number, y: number, width: number, height: number, attributes: IRectSVGAttributes);
+        /**...........................................................................
+         * _setAttributes
+         * ...........................................................................
+         * Set the appropriate attributes for this element
+         *
+         * @param   attributes  Initial set of attributes
+         * @param   x           The horizontal coordinate
+         * @param   y           The vertical coordinate
+         * @param   width       The width of the rectangle
+         * @param   height      The height of the rectangle
+         *
+         * @returns The updated attributes
+         * ...........................................................................
+         */
+        protected _setAttributes(attributes: IRectSVGAttributes, x: number, y: number, width: number, height: number): IRectSVGAttributes;
+        protected _updateExtrema(attributes: IRectSVGAttributes): void;
+        /**...........................................................................
+         * _basicRectToExtrema
+         * ...........................................................................
+         * helper function to turn a basic rect to extrema
+         * @param	rect	Rect to convert
+         * @returns	The extrema that correspond with the rect
+         * ...........................................................................
+         */
+        private _basicRectToExtrema(rect);
+        /**...........................................................................
+         * _checkBasicRectForBadData
+         * ...........................................................................
+         * helper function to check that a rectangle is actually renderable
+         * @param	rect	Determine if a rectangle is renderable
+         * ...........................................................................
+         */
+        private _checkBasicRectForBadData(rect);
+    }
+}
+declare namespace KIP.SVG {
     /**...........................................................................
      * @class ISVGStyle
      * ...........................................................................
@@ -7280,54 +8083,6 @@ declare namespace KIP.SVG {
         strokeOpacity?: number;
         strokeLinecap?: string;
         strokeLinejoin?: string;
-    }
-    interface IPathPoint {
-        point: IPoint;
-        controls?: IPoint[];
-        radius?: IPoint;
-        xRotation?: number;
-        largeArc?: number;
-        sweepFlag?: number;
-    }
-    /**
-     * @class IGradientPoint
-     *
-     * Keep track of a point used for gradients
-     */
-    interface IGradientPoint {
-        point: IPoint;
-        color: string;
-        offset: string;
-        opacity: number;
-    }
-    /**
-     * @class SVGGradientTypeEnum
-     *
-     * Handle different types of gradients
-     */
-    enum SVGGradientTypeEnum {
-        LINEAR = 1,
-        RADIAL = 2,
-    }
-    enum SVGShapeEnum {
-        CHECKMARK = 1,
-        X = 2,
-        PLUS = 3,
-    }
-    /**
-     * @type IExtrema
-     *
-     * Interface that stores a max point and a min point
-     */
-    type IExtrema = IGenericExtrema<IPoint>;
-    /**
-     * @class IGenericExtrema
-     *
-     * Handle any type of extreema
-     */
-    interface IGenericExtrema<T> {
-        max: T;
-        min: T;
     }
     /**...........................................................................
      * @class	SVGStyle
@@ -7403,250 +8158,11 @@ declare namespace KIP.SVG {
          */
         protected _generateStyleString(): void;
     }
-    /**...........................................................................
-     * @class 	SVGDrawable
-     * ...........................................................................
-     * Create a drawable SVG canvas
-     * @version 1.1
-     * @author	Kip Price
-     * ...........................................................................
-     */
-    class SVGDrawable extends Drawable {
-        /** The base element of the SVG canvas */
-        base: SVGElement;
-        /** Definitions for the SVG canvas */
-        private _definitionsElement;
-        /** gradients available in this canvas */
-        private __gradients;
-        /** The rectangle that defines the bounds of the canvas */
-        private _view;
-        readonly view: IBasicRect;
-        /** The maximum and minimum values of the SVG canvas */
-        private _extrema;
-        /** All elements that are drawn in the canvas */
-        protected _svgElems: Collection<SVGElement>;
-        protected _nonScaled: SVGElement[];
-        /** Any options that should be used for this canvas */
-        private _options;
-        /** The bounds of the SVG element in the actual window */
-        private _bounds;
-        /** The path that is currently being drawn in the canvas */
-        private _currentPath;
-        /** styles for the SVG element */
-        private _style;
-        readonly style: SVGStyle;
-        /**...........................................................................
-         * Sets the real-world width of the canvas
-         * @param 	w 	The width to set
-         * ...........................................................................
-         */
-        width: number;
-        /**...........................................................................
-         * Sets the real-world height of the canvas
-         * @param 	h 	The height to set
-         * ...........................................................................
-         */
-        height: number;
-        /**...........................................................................
-         * Constructs a basic SVG canvas
-         * @param 	id     The ID of the canvas
-         * @param 	bounds The real-world (e.g. in window) bounds of the canvas
-         * @param 	opts   Any options that should be applied to the canvas
-         * ...........................................................................
-         */
-        constructor(id?: string, bounds?: IBasicRect, opts?: ISVGOptions);
-        protected _createElements(): void;
-        /**...........................................................................
-         * _addEventListeners
-         * ...........................................................................
-         * Adds the relevant event listeners for the SVG object
-         * ...........................................................................
-         */
-        private _addEventListeners();
-        /**...........................................................................
-         * _onZoom
-         * ...........................................................................
-         * handle zooming in & out
-         * @param	direction	If positive, zooms in. If negative, zooms out
-         * ...........................................................................
-         */
-        protected _onZoom(direction: number): void;
-        /**...........................................................................
-         * _onPan
-         * ...........................................................................
-         * handle panning the SVG canvas
-         * @param	delta	The amount to pan by
-         * ...........................................................................
-         */
-        protected _onPan(delta: IPoint): void;
-        /**...........................................................................
-         * generateViewboxAttribute
-         * ...........................................................................
-         * Create a string that can be used in the viewbox attribute for the SVG
-         * @param  	set		True if we should also set the attribute after generating it
-         * @returns The viewbox attribute for the current view
-         * ...........................................................................
-         */
-        generateViewboxAttribute(set?: boolean): string;
-        /**...........................................................................
-         * _calculateView
-         * ...........................................................................
-         * Calculate what the view of the SVG should be, based on the extrema
-         * @returns True if the extrema were appropriately calculated
-         * ...........................................................................
-         */
-        protected _calculateView(): boolean;
-        /**...........................................................................
-         * _updateExtrema
-         * ...........................................................................
-         * Updates the extreme points of this SVG element after adding an element
-         * @param 	extrema 	The extrema of the element just added
-         * ...........................................................................
-         */
-        private _updateExtrema(extrema);
-        /**...........................................................................
-         * calculateSVGCoordinates
-         * ...........................................................................
-         * Calculates the SVG coordinates from real coordinates
-         * @param   pt	The real coordinates to convert
-         * @returns The SVG coordinates for this real point
-         * ...........................................................................
-         */
-        calculateSVGCoordinates(pt: IPoint): IPoint;
-        /**...........................................................................
-         * calculateScreenCoordinates
-         * ...........................................................................
-         * Calculate the real coordinates from SVG coordinates
-         * @param 	pt 	The point to convert to real coordinates
-         * @returns	The real coordinates for this SVG point
-         * ...........................................................................
-         */
-        calculateScreenCoordinates(pt: IPoint): IPoint;
-        /**...........................................................................
-         * _convertCoordinates
-         * ...........................................................................
-         *
-         * ...........................................................................
-         */
-        private _convertCoordinates(pt, numerator, denominator);
-        private _convertDistance(measure, numerator, denominator);
-        calculateSVGWidth(width: number): number;
-        calculateSVGHeight(height: number): number;
-        calculateScreenWidth(width: number): number;
-        calculateScreenHeight(height: number): number;
-        /**...........................................................................
-         * _addChild
-         * ...........................................................................
-         * @param 	type
-         * @param 	attributes
-         * @param 	parentGroup
-         * @returns	The created SVG element
-         * ...........................................................................
-         */
-        private _addChild(type, attributes?, parentGroup?);
-        /**...........................................................................
-         * _checkForCurrentPath
-         * ...........................................................................
-         *
-         * ...........................................................................
-         */
-        private _checkForCurrentPath();
-        /**...........................................................................
-         * _constructPathAttribute
-         * ...........................................................................
-         * @param prefix
-         * @param point
-         * @returns	The appropriate path string
-         * ...........................................................................
-         */
-        private _constructPathAttribute(prefix, point);
-        private _pointToAttributeString(point);
-        private _addToPathAttribute(suffix);
-        startPath(attr?: ISVGAttributes, parentGroup?: SVGElement): SVGElement;
-        lineTo(point: IPoint): void;
-        moveTo(point: IPoint): void;
-        curveTo(destination: IPoint, control1: IPoint, control2: IPoint): void;
-        arcTo(destination: IPoint, radius: IPoint, xRotation: number, largeArc: number, sweepFlag: number): void;
-        /** closes the path so it creates an enclosed space */
-        closePath(): void;
-        /** indicates the path is finished without closing the path */
-        finishPathWithoutClosing(): void;
-        /**
-         * Adds a path to the SVG canvas
-         * @param   {IPathPoint[]} points   The points to add to the path
-         * @param   {IAttributes}  attr     Any attributes that should be applied
-         * @param   {SVGElement}   group    The group this path should be added to
-         * @param   {boolean}      noFinish True if we should finish the path without closing
-         * @returns {SVGElement}            The path that was created
-         */
-        addPath(points: IPathPoint[], attr?: IAttributes, group?: SVGElement, noFinish?: boolean): SVGElement;
-        /**...........................................................................
-         * addRectangle
-         * ...........................................................................
-         * @param x
-         * @param y
-         * @param width
-         * @param height
-         * @param attr
-         * @param group
-         * ...........................................................................
-         */
-        addRectangle(x: number, y: number, width: number, height: number, attr?: ISVGAttributes, group?: SVGElement): SVGElement;
-        /**...........................................................................
-         * _addRectangleHelper
-         * ...........................................................................
-         * @param points
-         * @param attr
-         * @param group
-         * ...........................................................................
-         */
-        private _addRectangleHelper(points, attr?, group?);
-        /**...........................................................................
-         * addCircle
-         * ...........................................................................
-         * adds a circle to the SVG canvas
-         * @param	centerPt
-         * @param	radius
-         * @param	attr
-         * @param	group
-         * @returns	The created circle
-         * ...........................................................................
-         */
-        addCircle(centerPt: IPoint, radius: number, attr?: IAttributes, group?: SVGElement): SVGElement;
-        /**...........................................................................
-         * addPerfectArc
-         * ...........................................................................
-         * Adds a perfect arc to the SVG canvas
-         * ...........................................................................
-         */
-        addPerfectArc(centerPt: IPoint, radius: number, startDegree: number, endDegree: number, direction: number, noRadii: boolean, attr?: IAttributes, group?: SVGElement): SVGElement;
-        /**...........................................................................
-         * regularPolygon
-         * ...........................................................................
-         * creates a regular polygon to the SVG canvas
-         * @param   centerPt The central point of the polygon
-         * @param   sides    The number of sides of the polygon
-         * @param   radius   The radius of the polygon
-         * @param   attr     Any additional attributes
-         * @param   group    The group the polygon should be added to
-         * @returns The created polygon on the SVG Canvas
-         * ...........................................................................
-         */
-        regularPolygon(centerPt: IPoint, sides: number, radius: number, attr?: IAttributes, group?: SVGElement): SVGElement;
-        /**...........................................................................
-         * addRegularStar
-         * ...........................................................................
-         * Creates a regular star on the SVG canvas
-         * @param   centerPt      	The point at the center of the star
-         * @param   numberOfPoints 	The number of points of this star
-         * @param   radius        	[description]
-         * @param   innerRadius   	[description]
-         * @param   attr          	[description]
-         * @param   group         	[description]
-         * @returns The created star
-         * ...........................................................................
-         */
-        addRegularStar(centerPt: IPoint, numberOfPoints: number, radius: number, innerRadius: number, attr?: IAttributes, group?: SVGElement): SVGElement;
+}
+declare namespace KIP.SVG {
+    class TextElement extends SVGElem {
+        protected _setAttributes(attr: ISVGAttributes): ISVGAttributes;
+        protected _updateExtrema(): void;
         /**...........................................................................
          * addtext
          * ...........................................................................
@@ -7660,686 +8176,6 @@ declare namespace KIP.SVG {
          * ...........................................................................
          */
         addText(text: string, point: IPoint, originPt: IPoint, attr: IAttributes, group: SVGElement): SVGElement;
-        addFlowableText(text: string, bounds: IBasicRect, attr: IAttributes, group: SVGElement): SVGElement;
-        /**...........................................................................
-         * addGroup
-         * ...........................................................................
-         * @param	attr
-         * @param 	group
-         * @returns	The created element
-         * ...........................................................................
-         */
-        addGroup(attr?: IAttributes, group?: SVGElement): SVGElement;
-        /**...........................................................................
-         * addGradient
-         * ...........................................................................
-         * Adds a gradient to the SVG canvas
-         * @param   type       The type of gradient to add
-         * @param   points     What points describe the gradient
-         * @param   transforms 	 ???
-         * @returns he created gradient
-         * ...........................................................................
-         */
-        addGradient(type: SVGGradientTypeEnum, points: IGradientPoint[], transforms: {
-            start: IPoint;
-            end: IPoint;
-        }): string;
-        /**
-         * Adds a particular shape to the SVG canvas
-         * @param   shapeType The type of shape to add
-         * @param   scale     What scale the shape should be drawn at
-         * @param   attr      Any attributes that should be applied to the element
-         * @param   group     What group the element should be added to
-         * @returns The created shape
-         */
-        addShape(shapeType: SVGShapeEnum, scale?: number, attr?: IAttributes, group?: SVGElement): SVGElement;
-        /**
-         * Adds a checkmark to the canvas with the provided scale
-         */
-        private _addCheckShape(scale, attr?, group?);
-        /**
-         * Adds an 'ex' to the canvas with the provided scale
-         */
-        private _addExShape(scale, attr?, group?);
-        /**
-         * Adds a plus to the canvas with the provided scale
-         */
-        private _addPlusShape(scale, attr?, group?);
-        /**...........................................................................
-         * _convertPointsToPathPoints
-         * ...........................................................................
-         * Helper function to turn an array of IPoint elements to IPathPoint elements
-         * @param   points 	The points to convert
-         * @param   scale  	The scale that should be applied to the IPoint before turning into a IPathPoint
-         * @returns Array of scaled IPathPoints
-         * ...........................................................................
-         */
-        private _convertPointsToPathPoints(points, scale?);
-        assignStyle(element: SVGElement): void;
-        /**...........................................................................
-         * rotateElement
-         * ...........................................................................
-         * Rotates an element around a particular point
-         * @param   elem         The element to rotate
-         * @param   degree       How many degrees to rotate the element
-         * @param   rotateAround What point to rotate around
-         * @returns The rotated SVG Element
-         * ...........................................................................
-         */
-        rotateElement(elem: SVGElement, degree: number, rotateAround?: IPoint): SVGElement;
-        animateElement(): void;
-        /**...........................................................................
-         * measureElement
-         * ...........................................................................
-         * Measures an element in the SVG canvas
-         * @param   element 	The element to measure
-         * @returns The dimensions of the element, in SVG coordinates
-         * ...........................................................................
-         */
-        measureElement(element: SVGElement): IBasicRect;
-        /**...........................................................................
-         * _checkBasicRectForBadData
-         * ...........................................................................
-         * helper function to check that a rectangle is actually renderable
-         * @param	rect	Determine if a rectangle is renderable
-         * ...........................................................................
-         */
-        private _checkBasicRectForBadData(rect);
-        /**...........................................................................
-         * _basicRectToExtrema
-         * ...........................................................................
-         * helper function to turn a basic rect to extrema
-         * @param	rect	Rect to convert
-         * @returns	The extrema that correspond with the rect
-         * ...........................................................................
-         */
-        private _basicRectToExtrema(rect);
-        /**...........................................................................
-         * _extremaFromCenterPointAndRadius
-         * ...........................................................................
-         * helper function to calculate extrema from a central point and radius
-         * ...........................................................................
-         */
-        private _extremaFromCenterPointAndRadius(center, radius);
-        /**...........................................................................
-         * _calculatePolygonPoint
-         * ...........................................................................
-         * helper function to calculate a polygon's point at a certain angle
-         * ...........................................................................
-         */
-        private _calculatePolygonPoint(centerPt, currentAngle, radius);
-        /**...........................................................................
-         * _arcToExtrema
-         * ...........................................................................
-         * helper function to convert arc params to extrema
-         * ...........................................................................
-         */
-        private _arcToExtrema(startPt, endPt, centerPt, radius, startDeg, endDeg);
-        /**
-         * _saveOriginalView
-         */
-        protected _saveOriginalView: () => void;
-    }
-}
-declare namespace KIP.SVG {
-    class SVGElement {
-    }
-}
-declare namespace KIP.SVG {
-    class SVGStyle {
-        protected _needsUpdate: boolean;
-    }
-}
-declare namespace KIP {
-    /**...........................................................................
-     * @class ISVGOptions
-     * ...........................................................................
-     * Interface for all options that apply to SVG Drawables
-     * ...........................................................................
-     */
-    interface ISVGOptions {
-        /** how big the svg element should be padded */
-        gutter?: number;
-        /** whether we should resize the SVG canvas to the viewport */
-        auto_resize?: boolean;
-        /** how much we should zoom horizontally */
-        zoom_x?: number;
-        /** how much we should zoom vertically */
-        zoom_y?: number;
-        /** how much we should move horizontally */
-        pan_x?: boolean;
-        /** how much we should move vertically */
-        pan_y?: boolean;
-        /** true if we should ignore events like pan/zoom on the canvas */
-        prevent_events?: boolean;
-    }
-    /**...........................................................................
-     * @class ISVGAttributes
-     * ...........................................................................
-     * Additional attributes that can be applied
-     * ...........................................................................
-     */
-    interface ISVGAttributes extends IAttributes {
-        unscalable?: boolean;
-        svgStyle?: ISVGStyle;
-        [key: string]: any;
-    }
-    /**...........................................................................
-     * @class ISVGStyle
-     * ...........................................................................
-     * Keep track of SVG styles
-     * ...........................................................................
-     */
-    interface ISVGStyle {
-        fill: string;
-        fillOpacity?: number;
-        fontSize?: number;
-        fontWeight?: string;
-        fontFamily?: string;
-        stroke: string;
-        strokeWidth?: number;
-        strokeOpacity?: number;
-        strokeLinecap?: string;
-        strokeLinejoin?: string;
-    }
-    interface IPathPoint {
-        point: IPoint;
-        controls?: IPoint[];
-        radius?: IPoint;
-        xRotation?: number;
-        largeArc?: number;
-        sweepFlag?: number;
-    }
-    /**
-     * @class IGradientPoint
-     *
-     * Keep track of a point used for gradients
-     */
-    interface IGradientPoint {
-        point: IPoint;
-        color: string;
-        offset: string;
-        opacity: number;
-    }
-    /**
-     * @class SVGGradientTypeEnum
-     *
-     * Handle different types of gradients
-     */
-    enum SVGGradientTypeEnum {
-        LINEAR = 1,
-        RADIAL = 2,
-    }
-    enum SVGShapeEnum {
-        CHECKMARK = 1,
-        X = 2,
-        PLUS = 3,
-    }
-    /**
-     * @type IExtrema
-     *
-     * Interface that stores a max point and a min point
-     */
-    type IExtrema = IGenericExtrema<IPoint>;
-    /**
-     * @class IGenericExtrema
-     *
-     * Handle any type of extreema
-     */
-    interface IGenericExtrema<T> {
-        max: T;
-        min: T;
-    }
-    /**...........................................................................
-     * @class	SVGStyle
-     * ...........................................................................
-     * Keep track of style changes for SVG elements
-     * @version 1.0
-     * @author	Kip Price
-     * ...........................................................................
-     */
-    class SVGStyle implements ISVGStyle {
-        /** keep track of the last generated string */
-        protected _generatedStyleString: string;
-        /** inner tracking for our particular style selements */
-        protected _innerStyle: ISVGStyle;
-        /** keep track of whether we need to regenerate the string to use for the SVG style */
-        protected _needsNewString: boolean;
-        /**...........................................................................
-         * _setStyle
-         * ...........................................................................
-         * Update a particular style
-         * @param 	key 	The key
-         * @param 	value 	The value
-         * ...........................................................................
-         */
-        protected _setStyle(key: keyof ISVGStyle, value: string | number): void;
-        /** fill color or "None" */
-        fill: string;
-        /** fill opacity */
-        fillOpacity: number;
-        /** font size */
-        fontSize: number;
-        /** font weight */
-        fontWeight: string;
-        /** font family */
-        fontFamily: string;
-        /** stroke color */
-        stroke: string;
-        /** stroke width */
-        strokeWidth: number;
-        /** stroke opacity */
-        strokeOpacity: number;
-        /** stroke linecap */
-        strokeLinecap: string;
-        /** stroke linejoin */
-        strokeLinejoin: string;
-        /** keep track of how the line should be dashed */
-        protected _strokeDashArray: string;
-        strokeDashArray: string;
-        /**...........................................................................
-         * Create a SVGStyle object
-         * ...........................................................................
-         */
-        constructor();
-        /**...........................................................................
-         * clear
-         * ...........................................................................
-         * Clear out our inner styles to defaults
-         * ...........................................................................
-         */
-        clear(): void;
-        /**...........................................................................
-         * assignStyle
-         * ...........................................................................
-         * @param 	element 	The element to set styles on
-         * ...........................................................................
-         */
-        assignStyle(element: SVGElement): void;
-        /**...........................................................................
-         * _generateStyleString
-         * ...........................................................................
-         * Generate the appropriate string for the current style
-         * ...........................................................................
-         */
-        protected _generateStyleString(): void;
-    }
-    /**...........................................................................
-     * @class 	SVGDrawable
-     * ...........................................................................
-     * Create a drawable SVG canvas
-     * @version 1.1
-     * @author	Kip Price
-     * ...........................................................................
-     */
-    class SVGDrawable extends Drawable {
-        /** The base element of the SVG canvas */
-        base: SVGElement;
-        /** Definitions for the SVG canvas */
-        private _definitionsElement;
-        /** gradients available in this canvas */
-        private __gradients;
-        /** The rectangle that defines the bounds of the canvas */
-        private _view;
-        readonly view: IBasicRect;
-        /** The maximum and minimum values of the SVG canvas */
-        private _extrema;
-        /** All elements that are drawn in the canvas */
-        protected _svgElems: Collection<SVGElement>;
-        protected _nonScaled: SVGElement[];
-        /** Any options that should be used for this canvas */
-        private _options;
-        /** The bounds of the SVG element in the actual window */
-        private _bounds;
-        /** The path that is currently being drawn in the canvas */
-        private _currentPath;
-        /** styles for the SVG element */
-        private _style;
-        readonly style: SVGStyle;
-        /**...........................................................................
-         * Sets the real-world width of the canvas
-         * @param 	w 	The width to set
-         * ...........................................................................
-         */
-        width: number;
-        /**...........................................................................
-         * Sets the real-world height of the canvas
-         * @param 	h 	The height to set
-         * ...........................................................................
-         */
-        height: number;
-        /**...........................................................................
-         * Constructs a basic SVG canvas
-         * @param 	id     The ID of the canvas
-         * @param 	bounds The real-world (e.g. in window) bounds of the canvas
-         * @param 	opts   Any options that should be applied to the canvas
-         * ...........................................................................
-         */
-        constructor(id?: string, bounds?: IBasicRect, opts?: ISVGOptions);
-        protected _createElements(): void;
-        /**...........................................................................
-         * _addEventListeners
-         * ...........................................................................
-         * Adds the relevant event listeners for the SVG object
-         * ...........................................................................
-         */
-        private _addEventListeners();
-        /**...........................................................................
-         * _onZoom
-         * ...........................................................................
-         * handle zooming in & out
-         * @param	direction	If positive, zooms in. If negative, zooms out
-         * ...........................................................................
-         */
-        protected _onZoom(direction: number): void;
-        /**...........................................................................
-         * _onPan
-         * ...........................................................................
-         * handle panning the SVG canvas
-         * @param	delta	The amount to pan by
-         * ...........................................................................
-         */
-        protected _onPan(delta: IPoint): void;
-        /**...........................................................................
-         * generateViewboxAttribute
-         * ...........................................................................
-         * Create a string that can be used in the viewbox attribute for the SVG
-         * @param  	set		True if we should also set the attribute after generating it
-         * @returns The viewbox attribute for the current view
-         * ...........................................................................
-         */
-        generateViewboxAttribute(set?: boolean): string;
-        /**...........................................................................
-         * _calculateView
-         * ...........................................................................
-         * Calculate what the view of the SVG should be, based on the extrema
-         * @returns True if the extrema were appropriately calculated
-         * ...........................................................................
-         */
-        protected _calculateView(): boolean;
-        /**...........................................................................
-         * _updateExtrema
-         * ...........................................................................
-         * Updates the extreme points of this SVG element after adding an element
-         * @param 	extrema 	The extrema of the element just added
-         * ...........................................................................
-         */
-        private _updateExtrema(extrema);
-        /**...........................................................................
-         * calculateSVGCoordinates
-         * ...........................................................................
-         * Calculates the SVG coordinates from real coordinates
-         * @param   pt	The real coordinates to convert
-         * @returns The SVG coordinates for this real point
-         * ...........................................................................
-         */
-        calculateSVGCoordinates(pt: IPoint): IPoint;
-        /**...........................................................................
-         * calculateScreenCoordinates
-         * ...........................................................................
-         * Calculate the real coordinates from SVG coordinates
-         * @param 	pt 	The point to convert to real coordinates
-         * @returns	The real coordinates for this SVG point
-         * ...........................................................................
-         */
-        calculateScreenCoordinates(pt: IPoint): IPoint;
-        /**...........................................................................
-         * _convertCoordinates
-         * ...........................................................................
-         *
-         * ...........................................................................
-         */
-        private _convertCoordinates(pt, numerator, denominator);
-        private _convertDistance(measure, numerator, denominator);
-        calculateSVGWidth(width: number): number;
-        calculateSVGHeight(height: number): number;
-        calculateScreenWidth(width: number): number;
-        calculateScreenHeight(height: number): number;
-        /**...........................................................................
-         * _addChild
-         * ...........................................................................
-         * @param 	type
-         * @param 	attributes
-         * @param 	parentGroup
-         * @returns	The created SVG element
-         * ...........................................................................
-         */
-        private _addChild(type, attributes?, parentGroup?);
-        /**...........................................................................
-         * _checkForCurrentPath
-         * ...........................................................................
-         *
-         * ...........................................................................
-         */
-        private _checkForCurrentPath();
-        /**...........................................................................
-         * _constructPathAttribute
-         * ...........................................................................
-         * @param prefix
-         * @param point
-         * @returns	The appropriate path string
-         * ...........................................................................
-         */
-        private _constructPathAttribute(prefix, point);
-        private _pointToAttributeString(point);
-        private _addToPathAttribute(suffix);
-        startPath(attr?: ISVGAttributes, parentGroup?: SVGElement): SVGElement;
-        lineTo(point: IPoint): void;
-        moveTo(point: IPoint): void;
-        curveTo(destination: IPoint, control1: IPoint, control2: IPoint): void;
-        arcTo(destination: IPoint, radius: IPoint, xRotation: number, largeArc: number, sweepFlag: number): void;
-        /** closes the path so it creates an enclosed space */
-        closePath(): void;
-        /** indicates the path is finished without closing the path */
-        finishPathWithoutClosing(): void;
-        /**
-         * Adds a path to the SVG canvas
-         * @param   {IPathPoint[]} points   The points to add to the path
-         * @param   {IAttributes}  attr     Any attributes that should be applied
-         * @param   {SVGElement}   group    The group this path should be added to
-         * @param   {boolean}      noFinish True if we should finish the path without closing
-         * @returns {SVGElement}            The path that was created
-         */
-        addPath(points: IPathPoint[], attr?: IAttributes, group?: SVGElement, noFinish?: boolean): SVGElement;
-        /**...........................................................................
-         * addRectangle
-         * ...........................................................................
-         * @param x
-         * @param y
-         * @param width
-         * @param height
-         * @param attr
-         * @param group
-         * ...........................................................................
-         */
-        addRectangle(x: number, y: number, width: number, height: number, attr?: ISVGAttributes, group?: SVGElement): SVGElement;
-        /**...........................................................................
-         * _addRectangleHelper
-         * ...........................................................................
-         * @param points
-         * @param attr
-         * @param group
-         * ...........................................................................
-         */
-        private _addRectangleHelper(points, attr?, group?);
-        /**...........................................................................
-         * addCircle
-         * ...........................................................................
-         * adds a circle to the SVG canvas
-         * @param	centerPt
-         * @param	radius
-         * @param	attr
-         * @param	group
-         * @returns	The created circle
-         * ...........................................................................
-         */
-        addCircle(centerPt: IPoint, radius: number, attr?: IAttributes, group?: SVGElement): SVGElement;
-        /**...........................................................................
-         * addPerfectArc
-         * ...........................................................................
-         * Adds a perfect arc to the SVG canvas
-         * ...........................................................................
-         */
-        addPerfectArc(centerPt: IPoint, radius: number, startDegree: number, endDegree: number, direction: number, noRadii: boolean, attr?: IAttributes, group?: SVGElement): SVGElement;
-        /**...........................................................................
-         * regularPolygon
-         * ...........................................................................
-         * creates a regular polygon to the SVG canvas
-         * @param   centerPt The central point of the polygon
-         * @param   sides    The number of sides of the polygon
-         * @param   radius   The radius of the polygon
-         * @param   attr     Any additional attributes
-         * @param   group    The group the polygon should be added to
-         * @returns The created polygon on the SVG Canvas
-         * ...........................................................................
-         */
-        regularPolygon(centerPt: IPoint, sides: number, radius: number, attr?: IAttributes, group?: SVGElement): SVGElement;
-        /**...........................................................................
-         * addRegularStar
-         * ...........................................................................
-         * Creates a regular star on the SVG canvas
-         * @param   centerPt      	The point at the center of the star
-         * @param   numberOfPoints 	The number of points of this star
-         * @param   radius        	[description]
-         * @param   innerRadius   	[description]
-         * @param   attr          	[description]
-         * @param   group         	[description]
-         * @returns The created star
-         * ...........................................................................
-         */
-        addRegularStar(centerPt: IPoint, numberOfPoints: number, radius: number, innerRadius: number, attr?: IAttributes, group?: SVGElement): SVGElement;
-        /**...........................................................................
-         * addtext
-         * ...........................................................................
-         * Adds a text element to the SVG canvas
-         * @param   text     The text to add
-         * @param   point    The point at which to add the point
-         * @param   originPt If provided, the origin point within the text element that defines where the text is drawn
-         * @param   attr     Any attributes that should be applied to the element
-         * @param   group    The group to add this element to
-         * @returns The text element added to the SVG
-         * ...........................................................................
-         */
-        addText(text: string, point: IPoint, originPt: IPoint, attr: IAttributes, group: SVGElement): SVGElement;
-        addFlowableText(text: string, bounds: IBasicRect, attr: IAttributes, group: SVGElement): SVGElement;
-        /**...........................................................................
-         * addGroup
-         * ...........................................................................
-         * @param	attr
-         * @param 	group
-         * @returns	The created element
-         * ...........................................................................
-         */
-        addGroup(attr?: IAttributes, group?: SVGElement): SVGElement;
-        /**...........................................................................
-         * addGradient
-         * ...........................................................................
-         * Adds a gradient to the SVG canvas
-         * @param   type       The type of gradient to add
-         * @param   points     What points describe the gradient
-         * @param   transforms 	 ???
-         * @returns he created gradient
-         * ...........................................................................
-         */
-        addGradient(type: SVGGradientTypeEnum, points: IGradientPoint[], transforms: {
-            start: IPoint;
-            end: IPoint;
-        }): string;
-        /**
-         * Adds a particular shape to the SVG canvas
-         * @param   shapeType The type of shape to add
-         * @param   scale     What scale the shape should be drawn at
-         * @param   attr      Any attributes that should be applied to the element
-         * @param   group     What group the element should be added to
-         * @returns The created shape
-         */
-        addShape(shapeType: SVGShapeEnum, scale?: number, attr?: IAttributes, group?: SVGElement): SVGElement;
-        /**
-         * Adds a checkmark to the canvas with the provided scale
-         */
-        private _addCheckShape(scale, attr?, group?);
-        /**
-         * Adds an 'ex' to the canvas with the provided scale
-         */
-        private _addExShape(scale, attr?, group?);
-        /**
-         * Adds a plus to the canvas with the provided scale
-         */
-        private _addPlusShape(scale, attr?, group?);
-        /**...........................................................................
-         * _convertPointsToPathPoints
-         * ...........................................................................
-         * Helper function to turn an array of IPoint elements to IPathPoint elements
-         * @param   points 	The points to convert
-         * @param   scale  	The scale that should be applied to the IPoint before turning into a IPathPoint
-         * @returns Array of scaled IPathPoints
-         * ...........................................................................
-         */
-        private _convertPointsToPathPoints(points, scale?);
-        assignStyle(element: SVGElement): void;
-        /**...........................................................................
-         * rotateElement
-         * ...........................................................................
-         * Rotates an element around a particular point
-         * @param   elem         The element to rotate
-         * @param   degree       How many degrees to rotate the element
-         * @param   rotateAround What point to rotate around
-         * @returns The rotated SVG Element
-         * ...........................................................................
-         */
-        rotateElement(elem: SVGElement, degree: number, rotateAround?: IPoint): SVGElement;
-        animateElement(): void;
-        /**...........................................................................
-         * measureElement
-         * ...........................................................................
-         * Measures an element in the SVG canvas
-         * @param   element 	The element to measure
-         * @returns The dimensions of the element, in SVG coordinates
-         * ...........................................................................
-         */
-        measureElement(element: SVGElement): IBasicRect;
-        /**...........................................................................
-         * _checkBasicRectForBadData
-         * ...........................................................................
-         * helper function to check that a rectangle is actually renderable
-         * @param	rect	Determine if a rectangle is renderable
-         * ...........................................................................
-         */
-        private _checkBasicRectForBadData(rect);
-        /**...........................................................................
-         * _basicRectToExtrema
-         * ...........................................................................
-         * helper function to turn a basic rect to extrema
-         * @param	rect	Rect to convert
-         * @returns	The extrema that correspond with the rect
-         * ...........................................................................
-         */
-        private _basicRectToExtrema(rect);
-        /**...........................................................................
-         * _extremaFromCenterPointAndRadius
-         * ...........................................................................
-         * helper function to calculate extrema from a central point and radius
-         * ...........................................................................
-         */
-        private _extremaFromCenterPointAndRadius(center, radius);
-        /**...........................................................................
-         * _calculatePolygonPoint
-         * ...........................................................................
-         * helper function to calculate a polygon's point at a certain angle
-         * ...........................................................................
-         */
-        private _calculatePolygonPoint(centerPt, currentAngle, radius);
-        /**...........................................................................
-         * _arcToExtrema
-         * ...........................................................................
-         * helper function to convert arc params to extrema
-         * ...........................................................................
-         */
-        private _arcToExtrema(startPt, endPt, centerPt, radius, startDeg, endDeg);
-        /**
-         * _saveOriginalView
-         */
-        protected _saveOriginalView: () => void;
     }
 }
 declare namespace KIP {
@@ -8919,6 +8755,170 @@ declare namespace KIP {
         protected _createElements(): void;
         /** add a particular step to the the tutorial */
         addStep(title: string, details?: string): TutorialStep;
+    }
+}
+declare namespace KIP {
+    /**...........................................................................
+     * IUnitTestElems
+     * ...........................................................................
+     * Elements for unit tests
+     * ...........................................................................
+     */
+    interface IUnitTestElems extends IDrawableElements {
+        testContainer: HTMLElement;
+        groups: HTMLElement[];
+    }
+    interface IVisualTestButton {
+        label: string;
+        callback: Function;
+    }
+    interface IUnitTestDetails {
+        params: any[];
+        result: any;
+        details: string;
+    }
+    class UnitTestUI extends Drawable {
+        /** styles to use for this unit test */
+        protected static _uncoloredStyles: Styles.IStandardStyles;
+        /** elements associated with the unit test UI */
+        protected _elems: IUnitTestElems;
+        /**...........................................................................
+         * Construct a new instance of the UnitTestUI
+         * ...........................................................................
+         */
+        constructor();
+        /**...........................................................................
+         * _createElements
+         * ...........................................................................
+         * Create the elements needed for the drawable
+         * ...........................................................................
+         */
+        protected _createElements(): void;
+        /**...........................................................................
+         * tset
+         * ...........................................................................
+         * State the result of whether a certain test passed or failed
+         *
+         * @param 	name 			The name of the assertion
+         * @param 	actualResult 	What the result of the test was
+         * @param 	expectedResult 	What should have been the result
+         * @param 	message 		If provided, the additional message to display
+         * ...........................................................................
+         */
+        test(name: string, actualResult: any, expectedResult: any, message?: string): void;
+        /**...........................................................................
+         * assert
+         * ...........................................................................
+         * Asserts whether the passed in evaluation is true or false
+         *
+         * @param 	name 			Name of the test we are running
+         * @param 	pass 			Evaluation of pass
+         * @param 	trueMessage 	What to show if the evaluation passes
+         * @param 	falseMessage 	What to show if the evaluation fails
+         * ...........................................................................
+         */
+        assert(name: string, pass: boolean, trueMessage?: string, falseMessage?: string): void;
+        /**...........................................................................
+         * startGroup
+         * ...........................................................................
+         * Creates a group of tests
+         *
+         * @param 	groupName 	The name of the group to display
+         * ...........................................................................
+         */
+        startGroup(groupName: string): void;
+        /**...........................................................................
+         * testFunction
+         * ...........................................................................
+         *
+         * @param funcToTest
+         * @param title
+         * @param tests
+         * ...........................................................................
+         */
+        testFunction(funcToTest: Function, title: string, tests: IUnitTestDetails[]): void;
+        /**...........................................................................
+         * visualTest
+         * ...........................................................................
+         * @param title
+         * @param buttons
+         * ...........................................................................
+         */
+        visualTest(title: string, buttons: IVisualTestButton[]): void;
+        /**...........................................................................
+         * test
+         * ...........................................................................
+         * Check if the actual and expected results actually match
+         *
+         * @param actualResult 		What the test returned
+         * @param expectedResult 	What the test should have returned
+         *
+         * @returns	True if the actual result matches the expected result
+         * ...........................................................................
+         */
+        testEquality(actualResult: any, expectedResult: any): boolean;
+        /**...........................................................................
+         * _buildValueString
+         * ...........................................................................
+         * Build the string that will show whether the result is a match or not
+         *
+         * @param	pass			If true, builds the pass string
+         * @param	actualResult	The value that was received
+         * @param	expectedResult	The value we should have gotten
+         *
+         * @returns	A string that's appropriate for this test's result
+         * ...........................................................................
+         */
+        protected _buildValueString(pass: boolean, actualResult: any, expectedResult: any): string;
+        /**...........................................................................
+         * _buildTestString
+         * ...........................................................................
+         * Creates a test element for the div
+         *
+         * @param	name			What to display as the name of the test
+         * @param 	pass    		True if the test passed
+         * @param	value_string	The value to display for a pass
+         * @param 	message 		Message to display with test
+         *
+         * @returns	The string displaying the result of the test
+         * ...........................................................................
+         */
+        protected _buildTestString(name: string, pass: boolean, value_string: string, message: string): string;
+        /**...........................................................................
+         * _passToString
+         * ...........................................................................
+         * Display whether the test passed or failed
+         *
+         * @param 	pass	True if the test passed
+         *
+         * @returns	Display string for the pass result
+         * ...........................................................................
+         */
+        protected _passToString(pass: boolean): string;
+        /**...........................................................................
+         * _constructTestUI
+         * ...........................................................................
+         * Create the display elements for a test
+         *
+         * @param 	name 			Name of the test
+         * @param 	pass 			True if the test passed
+         * @param 	value_string 	The value of the test
+         * @param 	message 		Optional message to go with the test
+         * ...........................................................................
+         */
+        protected _constructTestUI(name: string, pass: boolean, value_string: string, message?: string): void;
+        /**...........................................................................
+         * _logTest
+         * ...........................................................................
+         * Adds the test to the console
+         *
+         * @param 	name 		Name of the test
+         * @param 	pass 		True if the test passed
+         * @param 	value_str 	What the test returned
+         * @param 	message 	Optional messgae to go with the test
+         * ...........................................................................
+         */
+        protected _logTest(name: string, pass: boolean, value_str: string, message?: string): void;
     }
 }
 declare namespace KIP {

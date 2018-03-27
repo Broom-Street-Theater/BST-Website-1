@@ -449,6 +449,23 @@ declare namespace BST {
         blurb: string;
         paypalAccount: string;
     }
+    /**
+     * @class   HomeData
+     *
+     * @version 1.0
+     * @author  Kip Price
+     */
+    class HomeData {
+        /**
+         * shouldShowSectionLink
+         *
+         * Determines if a particular link should show for a section, based
+         * on whether that section actually exists in code.
+         * @param   key     The key of the section
+         * @returns True if the key matches a section, false otherwise
+         */
+        static shouldShowSectionLink(key: string): boolean;
+    }
 }
 declare namespace BST {
     enum SCROLL_TYPE {
@@ -875,6 +892,7 @@ declare namespace BST {
         showData: Show;
         /** elements that make up the header */
         protected _elems: IHeaderElems;
+        /** handle listening to resize events */
         protected _resizeListeners: Function[];
         /** styles specific for this header */
         protected static _uncoloredStyles: KIP.Styles.IStandardStyles;
@@ -930,6 +948,14 @@ declare namespace BST {
          * ...........................................................................
          */
         protected _createHomeMenuElements(): void;
+        /**...........................................................................
+         * _addMenuLink
+         * ...........................................................................
+         *
+         * @param elem
+         * @param link
+         * ...........................................................................
+         */
         protected _addMenuLink(elem: HTMLElement, link: string): void;
         /**...........................................................................
          * _createMenuItem
@@ -1069,6 +1095,7 @@ declare namespace BST.Admin {
          * ...........................................................................
          */
         update(home: IHomeData): void;
+        private _onInvolvedPhotoChange(files);
     }
 }
 declare namespace BST.Admin {
@@ -1516,6 +1543,7 @@ declare namespace BST {
         protected static _uncoloredStyles: KIP.Styles.IStandardStyles;
         /** data for the home screen */
         protected _data: IHomeData;
+        protected _seasons: ISeasons;
         protected _header: BSTHeader;
         /** initialize the view */
         constructor(data: IHomeData, header: BSTHeader);
@@ -1526,6 +1554,22 @@ declare namespace BST {
          * ...........................................................................
          */
         protected _createElements(): void;
+        /**
+         * _determineSections
+         *
+         * Figure out which sections should be displayed
+         * @returns The array of sections to display
+         *
+         */
+        protected _determineSections(): HTMLElement[];
+        /**
+         * _determineSection
+         *
+         * Figure out which section should be created
+         * @param   key     The key for this section
+         * @returns The created section
+         */
+        protected _determineSection(key: string): SectionView;
         /**...........................................................................
          * _createAboutSection
          * ...........................................................................
@@ -1565,6 +1609,13 @@ declare namespace BST {
          * ...........................................................................
          */
         private _createDonateSection();
+        /**...........................................................................
+         * _createSeasonsSection
+         * ...........................................................................
+         *
+         * ...........................................................................
+         */
+        private _createSeasonsSection();
     }
 }
 declare namespace BST {
@@ -1680,6 +1731,15 @@ declare namespace BST {
          * ...........................................................................
          */
         private _createWriterAndDirectorDetails(showTitle);
+        /**...........................................................................
+         * _createWriterOrDirectorDetailElem
+         * ...........................................................................
+         * @param lbl
+         * @param data
+         * @param parent
+         * ...........................................................................
+         */
+        private _createWriterOrDirectorDetailElem(lbl, data, parent);
         /**...........................................................................
          * _createButtons
          * ...........................................................................
@@ -1797,55 +1857,82 @@ declare namespace BST {
 }
 declare namespace BST {
     /**...........................................................................
-     * ISeasonsElems
+     * @class   SeasonsSection
      * ...........................................................................
-     * Keeps track of elements needed for displaying seasons data
+     * @version 1.0
+     * @author  Kip Price
      * ...........................................................................
-     */
-    interface ISeasonElems extends ISectionElems {
-        /** left hand pane */
-        leftPane: HTMLElement;
-        /** right hand pane */
-        rightPane: HTMLElement;
-        /** collect the various elements */
-        wrapper: HTMLElement;
-        /** allow the user to change the selected season */
-        seasonSelector: HTMLElement;
-    }
+    */
     class SeasonsSection extends SectionView {
-        /** elements for the section */
-        protected _elems: ISeasonElems;
-        /** keep track of the season the user selected */
-        protected _selectedSeason: number;
-        /** data about all seasons */
+        /** content for the section */
+        protected _sectionContent: SubSections;
+        /** data for the section */
         protected _data: ISeasons;
-        /** style the seasons section */
+        /** keep track of the data by the year */
+        protected _dataByYear: KIP.Collection<IMiniShow[]>;
+        /** styles for the section */
         protected static _uncoloredStyles: KIP.Styles.IStandardStyles;
+        /**...........................................................................
+         * Create the section that will hold our seasons
+         * @param id
+         * @param title
+         * @param addlCls
+         * ...........................................................................
+         */
+        constructor(id: string, title: string, addlCls?: string);
+        /**...........................................................................
+         * _loadSeasons
+         * ...........................................................................
+         * handle loading the servers
+         * ...........................................................................
+         */
+        private _loadSeasons();
         /**...........................................................................
          * _createSectionElements
          * ...........................................................................
-         * Create the elements needed for the section
+         *
          * ...........................................................................
          */
         protected _createSectionElements(): void;
         /**...........................................................................
-         * _createSeasonSelector
+         * _processData
          * ...........................................................................
-         * Create the season selector menu
+         *
          * ...........................................................................
          */
-        protected _createSeasonSelector(): void;
+        protected _processData(): void;
+    }
+    /**...........................................................................
+     * @class   SeasonShowSubsection
+     * ...........................................................................
+     * @version 1.0
+     * @author  Kip Price
+     * ...........................................................................
+     */
+    class SeasonShowSubsection extends SubSection<IMiniShow[]> {
+        protected static _uncoloredStyles: KIP.Styles.IStandardStyles;
         /**...........................................................................
-         * _getSeasonElement
+         * _createContent
          * ...........................................................................
-         * Get the element to select a particular season
          *
-         * @param   season  The season year to select
-         *
-         * @returns The element for this particular element
          * ...........................................................................
          */
-        protected _getSeasonElement(season: number): HTMLElement;
+        protected _createContent(): void;
+        /**...........................................................................
+         * _createSeasonContainer
+         * ...........................................................................
+         * Create the container for all of the shows
+         * ...........................................................................
+         */
+        protected _createSeasonContainer(): void;
+        /**...........................................................................
+         * _createShowInSeason
+         * ...........................................................................
+         * Create a show in our season display
+         * @param   show    Create a show
+         * ...........................................................................
+         */
+        protected _createShowInSeason(show: IMiniShow): void;
     }
 }
 declare namespace BST {
