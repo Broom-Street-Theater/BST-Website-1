@@ -48,6 +48,7 @@
 		"./views/show/buzzSection.ts",
 		"./views/show/bioSection.ts",
 		"./views/show/synopsisSection.ts",
+		"./views/show/trailerView.ts",
 		"./views/show/photoLoopView.ts",
 		"./views/show/scrollablePhotos.ts",
 		"./views/show/auditionSection.ts",

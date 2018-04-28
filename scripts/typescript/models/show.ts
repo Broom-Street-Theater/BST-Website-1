@@ -18,6 +18,9 @@ namespace BST {
         /** any associated reviews */
         reviews: IReviewData[];
 
+        /** trailer for the show */
+        trailer: ITrailer;
+
         /** photos for the show */
         photos: IPhoto[];
 
@@ -65,6 +68,7 @@ namespace BST {
 
         /** synopsis of the show */
         synopsis: string;
+
     };
 
     export interface IAuditionInfo {
@@ -83,6 +87,21 @@ namespace BST {
 
         /** if available, the link at which auditioners can book a spot */
         reservationLink: string;
+    }
+
+    export enum TrailerType {
+        YOUTUBE = 1,
+        VIMEO = 2,
+        OTHER = 3
+    }
+
+    export interface ITrailer {
+
+        /** link for the trailer */
+        link: string;
+
+        /** what type of trailer we are showing */
+        type: TrailerType;
     }
 
     export interface ICharacter {
@@ -191,6 +210,9 @@ namespace BST {
         protected _photos: IPhoto[];
         public get photos(): IPhoto[] { return this._photos; }
 
+        protected _trailer: ITrailer;
+        public get trailer(): ITrailer { return this._trailer; }
+
         /** auditions for the show */
         protected _auditions: IAuditionInfo;
         public get auditions(): IAuditionInfo { return this._auditions; }
@@ -214,6 +236,7 @@ namespace BST {
             this._bios = showData.bios;
             this._reviews = showData.reviews;
             this._photos = showData.photos;
+            this._trailer = showData.trailer;
             this._auditions = showData.auditions;
         }
 

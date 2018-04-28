@@ -411,6 +411,18 @@ namespace BST.Admin {
                         isHilite: new KIP.Forms.CheckElement("isHilite", { label: "Is this the photo that should show for the show on the homepage?" })
                     }),
 
+                    trailer: new KIP.Forms.SectionElement<ITrailer>("trailer", { label: "Trailer information" }, {
+                        link: new KIP.Forms.TextElement("trailerURL", { label: "Link to Trailer" }),
+                        type: new KIP.Forms.SingleSelectButtonElem("trailerType", {
+                            label: "What type of video is this?",
+                            options: [
+                                { label: "YouTube", value: TrailerType.YOUTUBE },
+                                { label: "Vimeo", value: TrailerType.VIMEO },
+                                { label: "Other", value: TrailerType.OTHER }
+                            ]
+                        })
+                    }),
+
                     auditions: new KIP.Forms.SectionElement<IAuditionInfo>("auditions", { label: "Audition Info" }, {
                         dates: new KIP.Forms.ArrayElement<IAuditionDate>("auditionDates", { label: "Audition Dates", required: true }, {
                             start: new KIP.Forms.DateTimeElement("auditionStart", { label: "Audition start" }),

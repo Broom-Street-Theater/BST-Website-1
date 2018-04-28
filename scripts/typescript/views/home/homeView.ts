@@ -171,11 +171,12 @@ namespace BST {
         /**...........................................................................
          * _createSeasonsSection
          * ...........................................................................
-         * 
+         * Create a section for the seasons
          * ...........................................................................
          */
         private _createSeasonsSection(): SeasonsSection {
-            let section: SeasonsSection = new SeasonsSection("seasonsSection", "SEASONS", "seasonsSection");
+            let section: SeasonsSection = new SeasonsSection("seasonsSection", "SEASON", "seasonsSection");
+            section.onlyCurrent = true;
             return section;
         }
     }

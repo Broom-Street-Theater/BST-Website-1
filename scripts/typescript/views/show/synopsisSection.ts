@@ -2,6 +2,7 @@ namespace BST {
 
     /**...........................................................................
      * @class SynopsisSection
+     * ...........................................................................
      * Synopsis section for a particular show
      * @version 1.0
      * ...........................................................................
@@ -28,8 +29,38 @@ namespace BST {
                 flexWrap: "wrap"
             },
            
-            ".synopsis.section:not(.mobile) .overview .synopsis": {
-                width: "60%"
+            ".synopsis.section:not(.mobile) .overview .synopsisContainer": {
+                width: "60%",
+                display: "flex",
+                flexDirection: "column",
+
+                nested: {
+                    ".trailer": {
+                        paddingTop: "20px",
+                        display: "flex",
+                        alignItems: "center",
+
+                        nested: {
+                            "a": {
+                                color: "#333",
+                                fontSize: "1.3em",
+                                margin: "0",
+                                textTransform: "uppercase",
+                                
+                                fontFamily: "OpenSansBold"
+                            },
+
+                            ".videoIcn": {
+                                background: "transparent url('res/vid.png')",
+                                backgroundRepeat: "no-repeat",
+                                width: "25px",
+                                height: "25px",
+                                flexShrink: "0",
+                                paddingRight: "10px"
+                            }
+                        }
+                    } 
+                }
             },
            
             ".synopsis.section .overview .sidebar" : {
@@ -110,7 +141,16 @@ namespace BST {
             let hasSynopsis: boolean = (!!this._data.showDetails.synopsis);
 
             // create the two columns of info
-            let mainContent: HTMLElement = KIP.createSimpleElement("", "synopsis", this._data.showDetails.synopsis || "(Coming soon)");
+            let mainContent: HTMLElement = KIP.createSimpleElement("", "synopsisContainer");
+            let synopsisContent: HTMLElement = KIP.createElement({ cls: "synopsis", content: this._data.showDetails.synopsis || "(Coming soon)", parent: mainContent});
+            if (this._data.trailer) {
+                let trailerURL: HTMLElement = KIP.createElement({ 
+                    cls: "trailer", 
+                    content: "<div class='videoIcn'></div><a target='_blank' href='" + this._data.trailer.link + "'>Trailer</a>", 
+                    parent: mainContent 
+                });
+            }
+            
             let sidebar: HTMLElement = this._createSynopsisSidebar(hasSynopsis);
 
             // return the wrapping element that contains both of the columns

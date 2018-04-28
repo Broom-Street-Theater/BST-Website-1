@@ -18,6 +18,13 @@ namespace BST {
         /** keep track of the data by the year */
         protected _dataByYear: KIP.Collection<IMiniShow[]>;
 
+        /** whether this should only be the current season */
+        protected _onlyCurrent: boolean;
+        public set onlyCurrent(onlyCurrent: boolean) { 
+            this._onlyCurrent = onlyCurrent; 
+            KIP.addClass(this._elems.base, "onlyCurrent");
+        }
+
         /** styles for the section */
         protected static _uncoloredStyles: KIP.Styles.IStandardStyles = {
             ".seasonsSection .tabContainer" : {
@@ -26,8 +33,13 @@ namespace BST {
                 nested: {
                     ".tab" : {
                         paddingRight: "15px"
-                    }
+                    },
+
                 }
+            },
+
+            ".seasonsSection.onlyCurrent .tabContainer": {
+                display: "none"
             }
         }
 
@@ -106,6 +118,7 @@ namespace BST {
             let miniShow: IMiniShow;
             for (miniShow of sortedData) {
                 let year: number = new Date(miniShow.endDate).getFullYear();
+                if (isNaN(year)) { continue; }
                 let yearArr: IMiniShow[] = this._dataByYear.getValue(year.toString());
                 if (!yearArr) {
                     yearArr = [];
@@ -137,7 +150,16 @@ namespace BST {
 
         protected static _uncoloredStyles: KIP.Styles.IStandardStyles = {
             ".mobile .seasonContainer": {
-                maxHeight: "unset"
+                maxHeight: "unset",
+
+                nested: {
+                    ".show": {
+                        height: "auto",
+                        width: "100%",
+                        paddingTop: "15px",
+                        paddingBottom: "15px"
+                    }
+                }
             },
 
             ".seasonContainer": {
@@ -166,6 +188,7 @@ namespace BST {
                             ".showIcon": {
                                 width: "30px",
                                 height: "30px",
+                                flexShrink: "0",
                                 borderRadius: "100%",
                                 overflow: "hidden",
                                 backgroundColor: "#FFF",

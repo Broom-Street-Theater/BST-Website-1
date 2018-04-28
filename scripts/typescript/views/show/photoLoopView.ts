@@ -28,6 +28,9 @@ namespace BST {
         /** if true, loop through the photos */
         private _looped: boolean;
 
+        /** allow the trailer to be hosted in the scrolling photo view */
+        private _trailer: TrailerView;
+
         /** styles to use for the photo element */
         protected static _uncoloredStyles: KIP.Styles.IStandardStyles = {
             ".showPhotos" : {
@@ -92,13 +95,18 @@ namespace BST {
 
             // quit if there is not enough data
             if (!this._data) { return; }
-            if (this._data.photos.length === 0) { return; }
+            if ((this._data.photos.length === 0) && (!this._data.trailer)) { return; }
+
+            // if we have a trailer, create a trailer photo
+            if (this._data.trailer) {
+                this._createTrailer(this._data.trailer, true);
+            }
 
             // loop through all photos and create the elements
             let photo: IPhoto;
             for (let i = 0; i < this._data.photos.length; i += 1) {
                 photo = this._data.photos[i];
-                this._createPhoto(photo, (i === 1));
+                this._createPhoto(photo, ((i === 1) && (!this._data.trailer)));
             }
 
             if (this._data.photos.length > 1) {
@@ -125,7 +133,7 @@ namespace BST {
         }
 
         private _tryInitialize(): void {
-            if (this._center.photoElem.offsetHeight <= 1) {
+            if (this._center.displayElem.offsetHeight <= 1) {
                 window.setTimeout(() => { this._tryInitialize(); }, 10);
                 return;
             } else {
@@ -168,6 +176,12 @@ namespace BST {
             // add the element to the view
             this.base.appendChild(wrapper);
 
+        }
+
+        private _createTrailer(trailerData: ITrailer, shouldBeCenter?: boolean): void {
+            let linkedTrailer: LinkedTrailer = new LinkedTrailer(trailerData);
+            this._insertNode(linkedTrailer);
+            this.base.appendChild(linkedTrailer.trailerView.base);
         }
 
         /**...........................................................................
@@ -234,6 +248,7 @@ namespace BST {
          */
         private _rotate(): void {
             if (!this._center.next) { return; }
+            if (!(this._center as LinkedTrailer).isPlaying) { return; }
             this._center = this._center.next;
             this._center.center();
 
@@ -252,11 +267,13 @@ namespace BST {
      * ...........................................................................
      */
     export class LinkedPhoto {
+
+        //#region PROPERTIES
         protected static _count : number = 0;
 
         /** element for the photo itself */
-        private _photoElem: HTMLElement;
-        public get photoElem(): HTMLElement { return this._photoElem; }
+        private _displayElem: HTMLElement;
+        public get displayElem(): HTMLElement { return this._displayElem; }
 
         /** keep track of the photo that should come next */
         private _next: LinkedPhoto;
@@ -272,6 +289,7 @@ namespace BST {
 
         protected _id: number;
 
+        //#endregion
 
         /**...........................................................................
          * Create the linked photo object
@@ -282,12 +300,13 @@ namespace BST {
             this._id = LinkedPhoto._count;
             LinkedPhoto._count += 1;
 
-            this._photoElem = photo;
+            this._displayElem = photo;
             this._next = null;
             this._previous = null;
             this._shiftedCount = 0;
         }
 
+        //#region MOTION CONTROLS
         /**...........................................................................
          * center
          * ...........................................................................
@@ -296,12 +315,12 @@ namespace BST {
          */
         public center(): void {
 
-            let left: number = ((window.innerWidth - this._photoElem.offsetWidth) / 2);
+            let left: number = ((window.innerWidth - this._displayElem.offsetWidth) / 2);
 
             // first set my position
-            this._photoElem.style.left = left + "px";
-            this._photoElem.style.opacity = "1";
-            KIP.addClass(this._photoElem, "center");
+            this._displayElem.style.left = left + "px";
+            this._displayElem.style.opacity = "1";
+            KIP.addClass(this._displayElem, "center");
             this._shiftedCount += 1;
 
             // adjust my partners
@@ -324,19 +343,19 @@ namespace BST {
             // determine whether our left value should be based on our next or previous node
             if (lookToPrevious) {
                 if (!this._previous) { return; }
-                left = parseInt(this._previous.photoElem.style.left) + this._previous.photoElem.offsetWidth;
+                left = parseInt(this._previous.displayElem.style.left) + this._previous.displayElem.offsetWidth;
             } else {
                 if (!this.next) { return; }
-                left = parseInt(this._next.photoElem.style.left) - this._photoElem.offsetWidth;
+                left = parseInt(this._next.displayElem.style.left) - this._displayElem.offsetWidth;
             }
 
             // move this particular element
-            this._photoElem.style.left = left + "px";
-            this._photoElem.style.opacity = UNCENTERED_OPACITY;
-            KIP.removeClass(this._photoElem, "center");
+            this._displayElem.style.left = left + "px";
+            this._displayElem.style.opacity = UNCENTERED_OPACITY;
+            KIP.removeClass(this._displayElem, "center");
 
             // if we are completely offscreen, we should adjust it to the other side
-            if (left + this._photoElem.offsetWidth <= 0) {
+            if (left + this._displayElem.offsetWidth <= 0) {
                 this.moveRight();
             }
             
@@ -365,20 +384,52 @@ namespace BST {
             // hide the element for the transition
             window.setTimeout( () => {
  
-                this._photoElem.style.opacity = "0";
+                this._displayElem.style.opacity = "0";
 
                 // move and unhide the element
                 window.setTimeout( () => {
                     // actually move the element
-                    let position: number = parseInt(this._previous.photoElem.style.left) + this._previous.photoElem.offsetWidth;
-                    this._photoElem.style.left = position + "px";
+                    let position: number = parseInt(this._previous.displayElem.style.left) + this._previous.displayElem.offsetWidth;
+                    this._displayElem.style.left = position + "px";
 
                     window.setTimeout( () => { 
-                        this._photoElem.style.opacity = UNCENTERED_OPACITY;
+                        this._displayElem.style.opacity = UNCENTERED_OPACITY;
                     }, TRANSITION_SPEED);
                 }, TRANSITION_SPEED);
             }, TRANSITION_SPEED);
                 
+        }
+
+        //#endregion
+    }
+
+    /**
+     * @class   LinkedTrailer
+     * 
+     * Create the linked photo display of a trailer
+     * @version 1.0.0
+     * @author  Kip Price
+     */
+    export class LinkedTrailer extends LinkedPhoto {
+        private _trailerView: TrailerView;
+        public get trailerView(): TrailerView { return this._trailerView; }
+
+        private _isPlaying: boolean;
+        public get isPlaying(): boolean { return this._isPlaying; }
+
+        constructor(trailerInfo: ITrailer) {
+            let trailerView: TrailerView = new TrailerView();
+            trailerView.data = trailerInfo;
+            super(trailerView.base);
+            this._trailerView = trailerView;
+
+            this._trailerView.addPauseListeners(() => {
+                this._isPlaying = false;
+            });
+
+            this._trailerView.addPlayListener(() => {
+                this._isPlaying = true;
+            });
         }
     }
 }

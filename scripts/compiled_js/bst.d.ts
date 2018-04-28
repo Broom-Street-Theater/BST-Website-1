@@ -168,6 +168,8 @@ declare namespace BST {
         bios: IBioData[];
         /** any associated reviews */
         reviews: IReviewData[];
+        /** trailer for the show */
+        trailer: ITrailer;
         /** photos for the show */
         photos: IPhoto[];
         /** auditions for the show */
@@ -212,6 +214,17 @@ declare namespace BST {
         contactInfo: string;
         /** if available, the link at which auditioners can book a spot */
         reservationLink: string;
+    }
+    enum TrailerType {
+        YOUTUBE = 1,
+        VIMEO = 2,
+        OTHER = 3,
+    }
+    interface ITrailer {
+        /** link for the trailer */
+        link: string;
+        /** what type of trailer we are showing */
+        type: TrailerType;
     }
     interface ICharacter {
         description: string;
@@ -302,6 +315,8 @@ declare namespace BST {
         /** photos for the show */
         protected _photos: IPhoto[];
         readonly photos: IPhoto[];
+        protected _trailer: ITrailer;
+        readonly trailer: ITrailer;
         /** auditions for the show */
         protected _auditions: IAuditionInfo;
         readonly auditions: IAuditionInfo;
@@ -1612,7 +1627,7 @@ declare namespace BST {
         /**...........................................................................
          * _createSeasonsSection
          * ...........................................................................
-         *
+         * Create a section for the seasons
          * ...........................................................................
          */
         private _createSeasonsSection();
@@ -1870,6 +1885,9 @@ declare namespace BST {
         protected _data: ISeasons;
         /** keep track of the data by the year */
         protected _dataByYear: KIP.Collection<IMiniShow[]>;
+        /** whether this should only be the current season */
+        protected _onlyCurrent: boolean;
+        onlyCurrent: boolean;
         /** styles for the section */
         protected static _uncoloredStyles: KIP.Styles.IStandardStyles;
         /**...........................................................................
@@ -2103,6 +2121,7 @@ declare namespace BST {
 declare namespace BST {
     /**...........................................................................
      * @class SynopsisSection
+     * ...........................................................................
      * Synopsis section for a particular show
      * @version 1.0
      * ...........................................................................
@@ -2150,6 +2169,24 @@ declare namespace BST {
     }
 }
 declare namespace BST {
+    interface ITrailerElems extends IViewElements {
+        videoHost: HTMLElement;
+        iframe: HTMLElement;
+    }
+    class TrailerView extends View {
+        protected _elems: ITrailerElems;
+        protected _data: ITrailer;
+        protected _playListeners: Function[];
+        protected _pauseListeners: Function[];
+        protected _isPaused: boolean;
+        protected static _uncoloredStyles: KIP.Styles.IStandardStyles;
+        data: ITrailer;
+        protected _createElements(): void;
+        addPlayListener(listener: Function): void;
+        addPauseListeners(listener: Function): void;
+    }
+}
+declare namespace BST {
     /**...........................................................................
      * @class PhotoLoopView
      * ...........................................................................
@@ -2165,6 +2202,8 @@ declare namespace BST {
         protected _data: IShowData;
         /** if true, loop through the photos */
         private _looped;
+        /** allow the trailer to be hosted in the scrolling photo view */
+        private _trailer;
         /** styles to use for the photo element */
         protected static _uncoloredStyles: KIP.Styles.IStandardStyles;
         /**...........................................................................
@@ -2188,6 +2227,7 @@ declare namespace BST {
          * ...........................................................................
          */
         private _createPhoto(photo, shouldBeCenter?);
+        private _createTrailer(trailerData, shouldBeCenter?);
         /**...........................................................................
          * _insertNode
          * ...........................................................................
@@ -2222,8 +2262,8 @@ declare namespace BST {
     class LinkedPhoto {
         protected static _count: number;
         /** element for the photo itself */
-        private _photoElem;
-        readonly photoElem: HTMLElement;
+        private _displayElem;
+        readonly displayElem: HTMLElement;
         /** keep track of the photo that should come next */
         private _next;
         next: LinkedPhoto;
@@ -2261,6 +2301,20 @@ declare namespace BST {
          * ...........................................................................
          */
         moveRight(): void;
+    }
+    /**
+     * @class   LinkedTrailer
+     *
+     * Create the linked photo display of a trailer
+     * @version 1.0.0
+     * @author  Kip Price
+     */
+    class LinkedTrailer extends LinkedPhoto {
+        private _trailerView;
+        readonly trailerView: TrailerView;
+        private _isPlaying;
+        readonly isPlaying: boolean;
+        constructor(trailerInfo: ITrailer);
     }
 }
 declare namespace BST {

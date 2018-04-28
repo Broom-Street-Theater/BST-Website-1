@@ -377,6 +377,12 @@ var BST;
 (function (BST) {
     ;
     ;
+    var TrailerType;
+    (function (TrailerType) {
+        TrailerType[TrailerType["YOUTUBE"] = 1] = "YOUTUBE";
+        TrailerType[TrailerType["VIMEO"] = 2] = "VIMEO";
+        TrailerType[TrailerType["OTHER"] = 3] = "OTHER";
+    })(TrailerType = BST.TrailerType || (BST.TrailerType = {}));
     var IGenderEnum;
     (function (IGenderEnum) {
         IGenderEnum[IGenderEnum["NO_PREFERENCE"] = 0] = "NO_PREFERENCE";
@@ -419,6 +425,7 @@ var BST;
             this._bios = showData.bios;
             this._reviews = showData.reviews;
             this._photos = showData.photos;
+            this._trailer = showData.trailer;
             this._auditions = showData.auditions;
         }
         Object.defineProperty(Show.prototype, "showTitle", {
@@ -449,6 +456,11 @@ var BST;
         });
         Object.defineProperty(Show.prototype, "photos", {
             get: function () { return this._photos; },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Show.prototype, "trailer", {
+            get: function () { return this._trailer; },
             enumerable: true,
             configurable: true
         });
@@ -2953,6 +2965,17 @@ var BST;
                         isPoster: new KIP.Forms.CheckElement("isPoster", { label: "Is this a poster for the show?" }),
                         isHilite: new KIP.Forms.CheckElement("isHilite", { label: "Is this the photo that should show for the show on the homepage?" })
                     }),
+                    trailer: new KIP.Forms.SectionElement("trailer", { label: "Trailer information" }, {
+                        link: new KIP.Forms.TextElement("trailerURL", { label: "Link to Trailer" }),
+                        type: new KIP.Forms.SingleSelectButtonElem("trailerType", {
+                            label: "What type of video is this?",
+                            options: [
+                                { label: "YouTube", value: BST.TrailerType.YOUTUBE },
+                                { label: "Vimeo", value: BST.TrailerType.VIMEO },
+                                { label: "Other", value: BST.TrailerType.OTHER }
+                            ]
+                        })
+                    }),
                     auditions: new KIP.Forms.SectionElement("auditions", { label: "Audition Info" }, {
                         dates: new KIP.Forms.ArrayElement("auditionDates", { label: "Audition Dates", required: true }, {
                             start: new KIP.Forms.DateTimeElement("auditionStart", { label: "Audition start" }),
@@ -4643,11 +4666,12 @@ var BST;
         /**...........................................................................
          * _createSeasonsSection
          * ...........................................................................
-         *
+         * Create a section for the seasons
          * ...........................................................................
          */
         HomeView.prototype._createSeasonsSection = function () {
-            var section = new BST.SeasonsSection("seasonsSection", "SEASONS", "seasonsSection");
+            var section = new BST.SeasonsSection("seasonsSection", "SEASON", "seasonsSection");
+            section.onlyCurrent = true;
             return section;
         };
         /** styles for the home view */
@@ -5448,6 +5472,14 @@ var BST;
             _this._createElements();
             return _this;
         }
+        Object.defineProperty(SeasonsSection.prototype, "onlyCurrent", {
+            set: function (onlyCurrent) {
+                this._onlyCurrent = onlyCurrent;
+                KIP.addClass(this._elems.base, "onlyCurrent");
+            },
+            enumerable: true,
+            configurable: true
+        });
         /**...........................................................................
          * _loadSeasons
          * ...........................................................................
@@ -5511,6 +5543,9 @@ var BST;
             for (var _i = 0, sortedData_1 = sortedData; _i < sortedData_1.length; _i++) {
                 miniShow = sortedData_1[_i];
                 var year = new Date(miniShow.endDate).getFullYear();
+                if (isNaN(year)) {
+                    continue;
+                }
                 var yearArr = this._dataByYear.getValue(year.toString());
                 if (!yearArr) {
                     yearArr = [];
@@ -5535,8 +5570,11 @@ var BST;
                 nested: {
                     ".tab": {
                         paddingRight: "15px"
-                    }
+                    },
                 }
+            },
+            ".seasonsSection.onlyCurrent .tabContainer": {
+                display: "none"
             }
         };
         return SeasonsSection;
@@ -5611,7 +5649,15 @@ var BST;
         };
         SeasonShowSubsection._uncoloredStyles = {
             ".mobile .seasonContainer": {
-                maxHeight: "unset"
+                maxHeight: "unset",
+                nested: {
+                    ".show": {
+                        height: "auto",
+                        width: "100%",
+                        paddingTop: "15px",
+                        paddingBottom: "15px"
+                    }
+                }
             },
             ".seasonContainer": {
                 display: "flex",
@@ -5635,6 +5681,7 @@ var BST;
                             ".showIcon": {
                                 width: "30px",
                                 height: "30px",
+                                flexShrink: "0",
                                 borderRadius: "100%",
                                 overflow: "hidden",
                                 backgroundColor: "#FFF",
@@ -6301,6 +6348,7 @@ var BST;
 (function (BST) {
     /**...........................................................................
      * @class SynopsisSection
+     * ...........................................................................
      * Synopsis section for a particular show
      * @version 1.0
      * ...........................................................................
@@ -6335,7 +6383,15 @@ var BST;
         SynopsisSection.prototype._createSynopsisContent = function () {
             var hasSynopsis = (!!this._data.showDetails.synopsis);
             // create the two columns of info
-            var mainContent = KIP.createSimpleElement("", "synopsis", this._data.showDetails.synopsis || "(Coming soon)");
+            var mainContent = KIP.createSimpleElement("", "synopsisContainer");
+            var synopsisContent = KIP.createElement({ cls: "synopsis", content: this._data.showDetails.synopsis || "(Coming soon)", parent: mainContent });
+            if (this._data.trailer) {
+                var trailerURL = KIP.createElement({
+                    cls: "trailer",
+                    content: "<div class='videoIcn'></div><a target='_blank' href='" + this._data.trailer.link + "'>Trailer</a>",
+                    parent: mainContent
+                });
+            }
             var sidebar = this._createSynopsisSidebar(hasSynopsis);
             // return the wrapping element that contains both of the columns
             var base = KIP.createSimpleElement("", "overview", "", null, [mainContent, sidebar]);
@@ -6439,8 +6495,34 @@ var BST;
             ".synopsis.section.mobile .overview": {
                 flexWrap: "wrap"
             },
-            ".synopsis.section:not(.mobile) .overview .synopsis": {
-                width: "60%"
+            ".synopsis.section:not(.mobile) .overview .synopsisContainer": {
+                width: "60%",
+                display: "flex",
+                flexDirection: "column",
+                nested: {
+                    ".trailer": {
+                        paddingTop: "20px",
+                        display: "flex",
+                        alignItems: "center",
+                        nested: {
+                            "a": {
+                                color: "#333",
+                                fontSize: "1.3em",
+                                margin: "0",
+                                textTransform: "uppercase",
+                                fontFamily: "OpenSansBold"
+                            },
+                            ".videoIcn": {
+                                background: "transparent url('res/vid.png')",
+                                backgroundRepeat: "no-repeat",
+                                width: "25px",
+                                height: "25px",
+                                flexShrink: "0",
+                                paddingRight: "10px"
+                            }
+                        }
+                    }
+                }
             },
             ".synopsis.section .overview .sidebar": {
                 width: "35%",
@@ -6488,6 +6570,97 @@ var BST;
 })(BST || (BST = {}));
 var BST;
 (function (BST) {
+    var VIMEO_FMT = "<iframe src='{0}?autoplay=0&loop=1&autopause=1' width='100%' frameborder='0' webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>";
+    var YOUTUBE_FMT = "<iframe id='ytplayer' type='text/html' width='100%' src='{0}?autoplay=0&origin=http://bstonline.org' frameborder='0'></iframe>";
+    var YOUTUBE_SAMPLE = "https://www.youtube.com/watch?v=dilZpMFsohE";
+    var VIMEO_SAMPLE = "https://vimeo.com/65107797";
+    var TrailerView = /** @class */ (function (_super) {
+        __extends(TrailerView, _super);
+        function TrailerView() {
+            return _super !== null && _super.apply(this, arguments) || this;
+        }
+        Object.defineProperty(TrailerView.prototype, "data", {
+            set: function (trailerInfo) {
+                this._data = trailerInfo;
+                this._pauseListeners = [];
+                this._playListeners = [];
+                this._createElements();
+            },
+            enumerable: true,
+            configurable: true
+        });
+        TrailerView.prototype._createElements = function () {
+            var _this = this;
+            if (!this._data) {
+                return;
+            }
+            this._elems = {};
+            this._elems.base = KIP.createElement({ cls: "trailer" });
+            this._elems.videoHost = KIP.createElement({ cls: "videoContainer", parent: this._elems.base });
+            this._elems.iframe = KIP.createElement({
+                type: "iframe",
+                cls: "video",
+                attr: {
+                    frameborder: "0",
+                    width: "100%",
+                    allowfullscreen: "0"
+                }
+            });
+            var innerIFrame;
+            switch (this._data.type) {
+                case BST.TrailerType.YOUTUBE:
+                    innerIFrame = KIP.format(YOUTUBE_FMT, this._data.link);
+                    break;
+                case BST.TrailerType.VIMEO:
+                    innerIFrame = KIP.format(VIMEO_FMT, this._data.link);
+                    break;
+                case BST.TrailerType.OTHER:
+                    break;
+            }
+            this._elems.videoHost.innerHTML = innerIFrame;
+            this._elems.iframe = this._elems.videoHost.children[0];
+            this._elems.videoHost.addEventListener("click", function () {
+                var listeners;
+                if (_this._isPaused) {
+                    _this._isPaused = false;
+                    listeners = _this._playListeners;
+                }
+                else {
+                    _this._isPaused = true;
+                    listeners = _this._pauseListeners;
+                }
+                for (var _i = 0, listeners_1 = listeners; _i < listeners_1.length; _i++) {
+                    var listener = listeners_1[_i];
+                    if (!listener) {
+                        continue;
+                    }
+                    listener();
+                }
+            });
+        };
+        TrailerView.prototype.addPlayListener = function (listener) {
+            this._playListeners.push(listener);
+        };
+        TrailerView.prototype.addPauseListeners = function (listener) {
+            this._pauseListeners.push(listener);
+        };
+        TrailerView._uncoloredStyles = {
+            ".trailer": {
+                nested: {
+                    ".videoContainer": {
+                        nested: {
+                            "iframe": {}
+                        }
+                    }
+                }
+            }
+        };
+        return TrailerView;
+    }(BST.View));
+    BST.TrailerView = TrailerView;
+})(BST || (BST = {}));
+var BST;
+(function (BST) {
     /** how quickly we should scroll between photos */
     var SCROLL_SPEED = 5000;
     /** handle transitioning */
@@ -6530,14 +6703,18 @@ var BST;
             if (!this._data) {
                 return;
             }
-            if (this._data.photos.length === 0) {
+            if ((this._data.photos.length === 0) && (!this._data.trailer)) {
                 return;
+            }
+            // if we have a trailer, create a trailer photo
+            if (this._data.trailer) {
+                this._createTrailer(this._data.trailer, true);
             }
             // loop through all photos and create the elements
             var photo;
             for (var i = 0; i < this._data.photos.length; i += 1) {
                 photo = this._data.photos[i];
-                this._createPhoto(photo, (i === 1));
+                this._createPhoto(photo, ((i === 1) && (!this._data.trailer)));
             }
             if (this._data.photos.length > 1) {
                 // if we only have two photos, do some duplication so it still scrolls nicely
@@ -6561,7 +6738,7 @@ var BST;
         };
         PhotoLoopView.prototype._tryInitialize = function () {
             var _this = this;
-            if (this._center.photoElem.offsetHeight <= 1) {
+            if (this._center.displayElem.offsetHeight <= 1) {
                 window.setTimeout(function () { _this._tryInitialize(); }, 10);
                 return;
             }
@@ -6597,6 +6774,11 @@ var BST;
             this._insertNode(linkedPhoto);
             // add the element to the view
             this.base.appendChild(wrapper);
+        };
+        PhotoLoopView.prototype._createTrailer = function (trailerData, shouldBeCenter) {
+            var linkedTrailer = new LinkedTrailer(trailerData);
+            this._insertNode(linkedTrailer);
+            this.base.appendChild(linkedTrailer.trailerView.base);
         };
         /**...........................................................................
          * _insertNode
@@ -6661,6 +6843,9 @@ var BST;
             if (!this._center.next) {
                 return;
             }
+            if (!this._center.isPlaying) {
+                return;
+            }
             this._center = this._center.next;
             this._center.center();
             window.setTimeout(function () {
@@ -6713,6 +6898,7 @@ var BST;
      * ...........................................................................
      */
     var LinkedPhoto = /** @class */ (function () {
+        //#endregion
         /**...........................................................................
          * Create the linked photo object
          * @param   photo   The photo to display for this node
@@ -6721,13 +6907,13 @@ var BST;
         function LinkedPhoto(photo) {
             this._id = LinkedPhoto._count;
             LinkedPhoto._count += 1;
-            this._photoElem = photo;
+            this._displayElem = photo;
             this._next = null;
             this._previous = null;
             this._shiftedCount = 0;
         }
-        Object.defineProperty(LinkedPhoto.prototype, "photoElem", {
-            get: function () { return this._photoElem; },
+        Object.defineProperty(LinkedPhoto.prototype, "displayElem", {
+            get: function () { return this._displayElem; },
             enumerable: true,
             configurable: true
         });
@@ -6743,6 +6929,7 @@ var BST;
             enumerable: true,
             configurable: true
         });
+        //#region MOTION CONTROLS
         /**...........................................................................
          * center
          * ...........................................................................
@@ -6750,11 +6937,11 @@ var BST;
          * ...........................................................................
          */
         LinkedPhoto.prototype.center = function () {
-            var left = ((window.innerWidth - this._photoElem.offsetWidth) / 2);
+            var left = ((window.innerWidth - this._displayElem.offsetWidth) / 2);
             // first set my position
-            this._photoElem.style.left = left + "px";
-            this._photoElem.style.opacity = "1";
-            KIP.addClass(this._photoElem, "center");
+            this._displayElem.style.left = left + "px";
+            this._displayElem.style.opacity = "1";
+            KIP.addClass(this._displayElem, "center");
             this._shiftedCount += 1;
             // adjust my partners
             if (this._previous) {
@@ -6781,20 +6968,20 @@ var BST;
                 if (!this._previous) {
                     return;
                 }
-                left = parseInt(this._previous.photoElem.style.left) + this._previous.photoElem.offsetWidth;
+                left = parseInt(this._previous.displayElem.style.left) + this._previous.displayElem.offsetWidth;
             }
             else {
                 if (!this.next) {
                     return;
                 }
-                left = parseInt(this._next.photoElem.style.left) - this._photoElem.offsetWidth;
+                left = parseInt(this._next.displayElem.style.left) - this._displayElem.offsetWidth;
             }
             // move this particular element
-            this._photoElem.style.left = left + "px";
-            this._photoElem.style.opacity = UNCENTERED_OPACITY;
-            KIP.removeClass(this._photoElem, "center");
+            this._displayElem.style.left = left + "px";
+            this._displayElem.style.opacity = UNCENTERED_OPACITY;
+            KIP.removeClass(this._displayElem, "center");
             // if we are completely offscreen, we should adjust it to the other side
-            if (left + this._photoElem.offsetWidth <= 0) {
+            if (left + this._displayElem.offsetWidth <= 0) {
                 this.moveRight();
             }
             // if we are the right hand side, adjust our next element
@@ -6825,22 +7012,59 @@ var BST;
             }
             // hide the element for the transition
             window.setTimeout(function () {
-                _this._photoElem.style.opacity = "0";
+                _this._displayElem.style.opacity = "0";
                 // move and unhide the element
                 window.setTimeout(function () {
                     // actually move the element
-                    var position = parseInt(_this._previous.photoElem.style.left) + _this._previous.photoElem.offsetWidth;
-                    _this._photoElem.style.left = position + "px";
+                    var position = parseInt(_this._previous.displayElem.style.left) + _this._previous.displayElem.offsetWidth;
+                    _this._displayElem.style.left = position + "px";
                     window.setTimeout(function () {
-                        _this._photoElem.style.opacity = UNCENTERED_OPACITY;
+                        _this._displayElem.style.opacity = UNCENTERED_OPACITY;
                     }, TRANSITION_SPEED);
                 }, TRANSITION_SPEED);
             }, TRANSITION_SPEED);
         };
+        //#region PROPERTIES
         LinkedPhoto._count = 0;
         return LinkedPhoto;
     }());
     BST.LinkedPhoto = LinkedPhoto;
+    /**
+     * @class   LinkedTrailer
+     *
+     * Create the linked photo display of a trailer
+     * @version 1.0.0
+     * @author  Kip Price
+     */
+    var LinkedTrailer = /** @class */ (function (_super) {
+        __extends(LinkedTrailer, _super);
+        function LinkedTrailer(trailerInfo) {
+            var _this = this;
+            var trailerView = new BST.TrailerView();
+            trailerView.data = trailerInfo;
+            _this = _super.call(this, trailerView.base) || this;
+            _this._trailerView = trailerView;
+            _this._trailerView.addPauseListeners(function () {
+                _this._isPlaying = false;
+            });
+            _this._trailerView.addPlayListener(function () {
+                _this._isPlaying = true;
+            });
+            return _this;
+        }
+        Object.defineProperty(LinkedTrailer.prototype, "trailerView", {
+            get: function () { return this._trailerView; },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(LinkedTrailer.prototype, "isPlaying", {
+            get: function () { return this._isPlaying; },
+            enumerable: true,
+            configurable: true
+        });
+        return LinkedTrailer;
+    }(LinkedPhoto));
+    BST.LinkedTrailer = LinkedTrailer;
 })(BST || (BST = {}));
 var BST;
 (function (BST) {
